@@ -1,16 +1,17 @@
-# 🚀 MarsAI — Infrastructure & Guide de Déploiement
-MarsAI est une plateforme complète dédiée au festival du film d'IA, orchestrant la diffusion des œuvres, l'espace jury et les événements. Déployée sous Docker (React, API Node.js, MariaDB), la stack intègre un antivirus ClamAV en temps réel analysant chaque média téléversé pour garantir une expérience à la fois fluide et ultra-sécurisée.
-#
-Ce dépôt contient la configuration de déploiement et d'orchestration Docker pour la plateforme **MarsAI** (Frontend, Backend API, Base de données et Antivirus en temps réel).
+# 🚀 MarsAI — Plateforme & Monorepo
+
+> **MarsAI** est une plateforme complète dédiée au festival du film d'IA, orchestrant la diffusion des œuvres, l'espace jury et les événements. Déployée sous Docker (React, API Node.js, MariaDB), la stack intègre un antivirus ClamAV en temps réel analysant chaque média téléversé pour garantir une expérience à la fois fluide et ultra-sécurisée.
+
+Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo** : l'interface utilisateur frontend, l'API backend, la base de données, la sécurité antivirus en temps réel et l'orchestration Docker.
 
 ---
 
 ## 📑 Sommaire
 1. [Architecture de la stack](#-architecture-de-la-stack)
 2. [Prérequis](#-prérequis)
-3. [Structure du projet](#-structure-du-projet)
+3. [Structure du Monorepo](#-structure-du-monorepo)
 4. [Tutoriel d'installation pas-à-pas](#-tutoriel-dinstallation-pas-à-pas)
-   - [Étape 1 : Cloner le dépôt](#étape-1--cloner-le-dépôt)
+   - [Étape 1 : Cloner le Monorepo](#étape-1--cloner-le-monorepo)
    - [Étape 2 : Créer le réseau Docker externe](#étape-2--créer-le-réseau-docker-externe)
    - [Étape 3 : Configurer les variables d'environnement (`.env`)](#étape-3--configurer-les-variables-denvironnement-env)
    - [Étape 4 : Préparer le dossier d'uploads](#étape-4--préparer-le-dossier-duploads)
@@ -69,46 +70,46 @@ La stack est composée de 4 services orchestrés via Docker Compose :
 
 * **Docker Engine** (version 24.0+) et le plugin **Docker Compose v2** (`docker compose version`).
 * **Git**.
-* Un accès aux dépôts GitHub des sous-composants (si clonés séparément) :
-  * `git@github.com:paguera/marsai-backend.git`
-  * `git@github.com:paguera/marsai-frontend.git`
 
 ---
 
-## 📁 Structure du projet
+## 📁 Structure du Monorepo
 
 ```text
-.
-├── docker-compose.yml         # Fichier principal d'orchestration
-├── .env                       # Variables d'environnement (à créer, non versionné)
-├── marsai-uploads/            # Dossier local partagé pour les fichiers téléversés
-├── marsai-backend/            # Code source du backend Express / TypeScript
+Marsai/
+├── docker-compose.yml         # Fichier principal d'orchestration de tous les services
+├── .env.example               # Modèle des variables d'environnement
+├── .env                       # Variables d'environnement locales (non versionné)
+├── marsai-uploads/            # Volume local partagé pour les fichiers téléversés
+├── marsai-frontend/           # [Frontend] Application React 19, TypeScript, Vite & Tailwind
+│   ├── src/                   # Code source de l'interface
+│   ├── nginx.conf             # Configuration du serveur web Nginx de production
+│   └── Dockerfile             # Build multi-stage (Build Vite -> Nginx)
+├── marsai-backend/            # [Backend] API REST Express 5, TypeScript, JWT & MariaDB
 │   ├── database/db.sql        # Script SQL d'initialisation de la BDD
-│   └── scripts/create-admin.ts# Script de création du compte administrateur
-├── marsai-frontend/           # Code source de l'interface React / Vite
-└── marsai-clamav-watchdog/    # Dockerfile et scripts du chien de garde ClamAV
-    ├── entrypoint.sh          # Initialisation et mise à jour des signatures virales
-    └── watchdog.sh            # Boucle de détection inotify et analyse clamdscan
+│   ├── scripts/create-admin.ts# Script d'initialisation du compte administrateur
+│   └── Dockerfile             # Conteneur Node.js d'exécution de l'API
+└── marsai-clamav-watchdog/    # [Sécurité] Chien de garde antivirus ClamAV
+    ├── Dockerfile             # Conteneur Alpine Linux avec ClamAV et inotify-tools
+    ├── entrypoint.sh          # Téléchargement et actualisation continue de la base virale
+    └── watchdog.sh            # Boucle inotifywait et destruction automatique des malwares
 ```
 
 ---
 
 ## 🚀 Tutoriel d'installation pas-à-pas
 
-### Étape 1 : Cloner le dépôt
+### Étape 1 : Cloner le Monorepo
 
-Clonez le dépôt principal d'infrastructure :
+Clonez le dépôt unique qui contient désormais tous les sous-projets :
 
 ```bash
-git clone <URL_DU_REPO_INFRASTRUCTURE> marsai
-cd marsai
+git clone git@github.com:paguera/Marsai.git
+cd Marsai
 ```
 
-*(Si les dossiers `marsai-frontend` et `marsai-backend` ne sont pas encore présents ou sont des dépôts distincts, clonez-les dans le dossier racine :)*
-```bash
-git clone git@github.com:paguera/marsai-backend.git
-git clone git@github.com:paguera/marsai-frontend.git
-```
+> [!TIP]
+> Tous les sous-projets étant unifiés dans ce dépôt, un seul `git clone` suffit pour disposer immédiatement de l'intégralité du code et de la configuration de déploiement.
 
 ---
 
@@ -129,9 +130,10 @@ docker network create nas-net
 
 ### Étape 3 : Configurer les variables d'environnement (`.env`)
 
-Créez un fichier `.env` à la racine du projet :
+Copiez le modèle de configuration fourni puis adaptez les variables :
 
 ```bash
+cp .env.example .env
 nano .env
 ```
 
