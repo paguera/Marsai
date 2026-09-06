@@ -1,0 +1,64 @@
+/* Conteneur principal */
+.editor-container {
+  border: 1px solid #374151; /* gray-700 */
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #111827; /* gray-900 */
+}
+
+/* Barre d'outils */
+.control-group {
+  background-color: #1f2937; /* gray-800 */
+  padding: 10px;
+  border-bottom: 1px solid #374151;
+  display: flex;
+  gap: 8px;
+}
+
+.button-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* L'éditeur de texte lui-même */
+.tiptap {
+  padding: 20px;
+  min-height: 250px;
+  outline: none;
+  color: #f3f4f6; /* gray-100 */
+  line-height: 1.6;
+}
+
+/* Typography styles for the editor */
+.tiptap h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.tiptap h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap p {
+  margin-bottom: 1rem;
+}
+
+/* État actif */
+button.is-active {
+  background-color: #374151;
+  color: #fbbf24; /* primary color / amber-400 */
+}

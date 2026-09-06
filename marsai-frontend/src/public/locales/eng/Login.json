@@ -1,0 +1,19 @@
+{
+  "title": "Login",
+  "subtitle": "Login Information",
+  "email_label": "Email address",
+  "email_placeholder": "Email address...",
+  "password_label": "Password",
+  "password_placeholder": "Password...",
+  "login_button": "Login",
+  "jury_title": "LOGIN AS JURY",
+  "validation": {
+    "email_required": "Email is required",
+    "email_too_long": "Email is too long",
+    "email_invalid": "Invalid email format",
+    "password_too_short": "Password must be at least 6 characters",
+    "password_too_long": "Password is too long",
+    "password_complexity": "Password must contain at least one uppercase letter, one number, and one special character",
+    "password_required": "Password is required"
+  }
+}

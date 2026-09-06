@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+@tailwind utilities;
+@import "@fontsource/noto-sans";
+
+@theme  {
+    /* Azur Blue (OM Blue) - Primary brand color */
+    --color-brand:    #2faee0;
+    /* Pure White for text and highlights */
+    --color-primary:    #ffffff;
+    /* Sky Blue accent */
+    --color-secondary:    #87ceeb;
+    /* Main Background - Deep Black */
+    --color-dark:    #000000;
+    /* Surface color - Very Dark Gray (Glass base) */
+    --color-brand2:    #0a0a0a;
+    /* Subtle light border for dark theme */
+    --color-border:    rgba(255, 255, 255, 0.1);
+    /* Interaction Hover state */
+    --color-hover:    #4cc9f0;
+    /* Accessible Light Grey for standard text */
+    --color-white:    #ccd6f6;
+    /* Secondary dark surface */
+    --color-third:    #111111;
+
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "Noto Sans";
+    scroll-behavior: smooth;
+    /* Applies black background and white text by default */
+    @apply bg-dark text-white;
+}
+
+/* Glass panel effect for dark theme */
+.glass-panel-dark {
+    @apply bg-black/50 backdrop-blur-sm border border-white/10 shadow-2xl rounded-[40px];
+}
+
+@media (max-width: 768px) {
+  .mobile-vertical-table thead {
+    display: none;
+  }
+  .mobile-vertical-table tr {
+    display: block;
+    border-bottom: 2px solid #1f2937;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+  }
+  .mobile-vertical-table tr:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .mobile-vertical-table td {
+    display: block;
+    text-align: right;
+    position: relative;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    @apply text-white;
+  }
+  .mobile-vertical-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 45%;
+    padding-left: 1rem;
+    font-weight: bold;
+    text-align: left;
+    white-space: nowrap;
+    @apply text-brand;
+  }
+
+  .mobile-vertical-table .action-cell {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding-top: 1rem;
+  }
+
+  .mobile-vertical-table .action-cell::before {
+    display: none;
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "title": "Informations personnelles",
+  "subtitle": "Ces informations seront affichées publiquement sur la plateforme.",
+  "firstname_label": "Prénom",
+  "firstname_placeholder": "Ex: Jean",
+  "lastname_label": "Nom de famille",
+  "lastname_placeholder": "Ex: Dupont",
+  "email_label": "Adresse e-mail",
+  "email_placeholder": "Adresse e-mail...",
+  "password_label": "Mot de passe",
+  "password_placeholder": "Mot de passe...",
+  "confirm_password_label": "Confirmer le mot de passe",
+  "confirm_password_placeholder": "Confirmer le mot de passe...",
+  "register_button": "Inscription",
+  "jury_title": "INSCRIPTION EN TANT QUE JURY",
+  "alert": {
+    "password_mismatch": "Les mots de passe ne correspondent pas.",
+    "success": "Inscription réussie !",
+    "error": "Erreur lors de l'inscription.",
+    "network_error": "Erreur réseau lors de l'inscription."
+  }
+}

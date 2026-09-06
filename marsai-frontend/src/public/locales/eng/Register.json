@@ -1,0 +1,22 @@
+{
+  "title": "Personal Information",
+  "subtitle": "This information will be displayed publicly on the platform.",
+  "firstname_label": "First name",
+  "firstname_placeholder": "Ex: John",
+  "lastname_label": "Last name",
+  "lastname_placeholder": "Ex: Doe",
+  "email_label": "Email address",
+  "email_placeholder": "Email address...",
+  "password_label": "Password",
+  "password_placeholder": "Password...",
+  "confirm_password_label": "Confirm password",
+  "confirm_password_placeholder": "Confirm password...",
+  "register_button": "Register",
+  "jury_title": "REGISTER AS JURY",
+  "alert": {
+    "password_mismatch": "Passwords do not match.",
+    "success": "Registration successful!",
+    "error": "Error during registration.",
+    "network_error": "Network error during registration."
+  }
+}

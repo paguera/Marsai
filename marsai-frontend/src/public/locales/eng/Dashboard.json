@@ -1,0 +1,112 @@
+{
+  "welcome": "Welcome",
+  "description": "Here is your personalized administration area.",
+  "error_status": "Error Status: ",
+  "dashboard_global": {
+    "title": "Statistics",
+    "subtitle": "OVERVIEW",
+    "description": "Detailed analysis of progress and performance indicators",
+    "error": "Error: {{message}}",
+    "card": {
+      "objective": "OBJECTIVE: {{count}}",
+      "films_evaluated": "{{count}} FILMS EVALUATED BY THE JURY",
+      "films_submitted": "Movies submitted",
+      "completed": "{{percentage}}% completed",
+      "active_accounts": "Active directors account",
+      "today": "+{{count}} today",
+      "participants": "Signed up for an event",
+      "rating_title": "Movies rated by a jury",
+      "selected_films": "Selected films",
+      "represented_countries": "Represented countries"
+    }
+  },
+  "movies": {
+    "loading": "Loading movies...",
+    "title": "Movies moderation",
+    "subtitle": "SUBMITTED FILMS",
+    "description": "Manage all submissions and manage features.",
+    "search_placeholder": "Search for a film..."
+  },
+  "movie_card": {
+    "author_placeholder": "author placeholder"
+  },
+  "user": {
+    "title": "Role management",
+    "subtitle": "REGISTERED USER LIST",
+    "description": "Manage all users and their roles.",
+    "table": {
+      "name": "Name",
+      "firstname": "First name",
+      "email": "Email",
+      "role": "Role",
+      "action": "Action",
+      "no_role": "No role assigned"
+    },
+    "button": {
+      "promote_jury": "Jury",
+      "promote_admin": "Admin",
+      "delete": "Delete"
+    }
+  },
+  "subscribers": {
+    "title": "Newsletter subscribers",
+    "description": "Here you can see the actual subscribers",
+    "number": "Total amount of subscribers : {{count}}"
+  },
+  "register": {
+    "title": "User registration",
+    "subtitle": "CREATE NEW ACCOUNT",
+    "description": "Register new users or jury members.",
+    "default_role_notice": "By default the created user will not have a predefined role"
+  },
+  "newsletters": {
+    "title": "Newsletter management",
+    "subtitle": "CREATE & SEND NEWSLETTERS",
+    "description": "Manage your subscribers and send them newsletters.",
+    "create_title": "Create a Newsletter",
+    "send_title": "Send a Newsletter",
+    "send_to_subscribers": "Send a specific Newsletter to all actual subscribers",
+    "object_label": "Object",
+    "save_button": "Save",
+    "send_button": "Send"
+  },
+  "events": {
+    "title": "Event management",
+    "subtitle": "SCHEDULED EVENTS",
+    "description": "Manage all events and their details.",
+    "add_button": "Add event",
+    "loading": "Loading events...",
+    "search_placeholder": "Search for an event...",
+    "add_title": "Add Event",
+    "title_label": "Title required",
+    "title_placeholder": "Title",
+    "description_label": "Description required",
+    "description_placeholder": "Description",
+    "status_label": "Status required",
+    "status_placeholder": "Status (ex: Completed)",
+    "location_label": "Location required",
+    "location_placeholder": "Location",
+    "start_at_label": "Start date",
+    "start_at_placeholder": "10-10-2000",
+    "duration_label": "Number required",
+    "duration_placeholder": "Duration (minutes)",
+    "created_at_label": "Creation date",
+    "created_at_placeholder": "Created At (10-10-2000)",
+    "updated_at_label": "Update date",
+    "updated_at_placeholder": "Updated At (10-10-2000)",
+    "published_at_label": "Publication date",
+    "published_at_placeholder": "Published At (10-10-2000)",
+    "success_message": "Event added!",
+    "title_placeholder": "Event title",
+    "description_placeholder": "Detailed description",
+    "location_placeholder": "Location (ex: London)",
+    "table": {
+      "title": "Title",
+      "description": "Description",
+      "status": "Status",
+      "date": "Date & Time",
+      "duration": "Duration",
+      "location": "Location"
+    }
+  }
+}

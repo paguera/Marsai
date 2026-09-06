@@ -1,0 +1,80 @@
+services:
+  # --- MARSAI: DATABASE ---
+  marsai-db:
+    image: docker.io/library/mariadb:10.11
+    container_name: marsai-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MARSAI_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MARSAI_DB_NAME}
+      MYSQL_USER: ${MARSAI_DB_USER}
+      MYSQL_PASSWORD: ${MARSAI_DB_PASSWORD}
+    networks:
+      - nas-net
+    volumes:
+      - ./marsai-backend/database/db.sql:/docker-entrypoint-initdb.d/init.sql:z
+      - marsai-db-data:/var/lib/mysql:z
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  marsai-backend:
+    build:
+      context: ./marsai-backend/
+    image: marsai-backend:latest
+    container_name: marsai-backend
+    restart: always
+    networks:
+      - nas-net
+    env_file:
+      - ./.env
+    environment:
+      - DB_HOST=marsai-db
+      - DB_USER=${MARSAI_DB_USER}
+      - DB_PASSWORD=${MARSAI_DB_PASSWORD}
+      - DB_NAME=${MARSAI_DB_NAME}
+      - DB_PORT=3306
+    volumes:
+      - ./marsai-uploads:/app/uploads:z
+    depends_on:
+      marsai-db:
+        condition: service_healthy
+
+  # --- MARSAI: FRONTEND ---
+  marsai-frontend:
+    build:
+      context: ./marsai-frontend
+      args:
+        - VITE_API_URL=${BASE_URL}
+    image: marsai-frontend:latest
+    container_name: marsai-frontend
+    restart: always
+    networks:
+      - nas-net
+    depends_on:
+      marsai-backend:
+        condition: service_started
+
+  # --- MARSAI: ANTIVIRUS WATCHDOG ---
+  marsai-watchdog:
+    build:
+      context: ./marsai-clamav-watchdog
+    image: marsai-watchdog:latest
+    container_name: marsai-watchdog
+    restart: always
+    volumes:
+      - ./marsai-uploads:/scandir:z
+      - marsai-clamav-db:/var/lib/clamav
+    networks:
+      - nas-net
+
+volumes:
+  marsai-db-data:
+  marsai-clamav-db:
+
+networks:
+  nas-net:
+    external: true
+

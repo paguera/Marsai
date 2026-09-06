@@ -1,0 +1,114 @@
+{
+  "header": {
+    "gallery": "Gallery",
+    "agenda": "Agenda",
+    "jury": "Jury",
+    "submit": "Submit a film",
+    "jurySpace": "Jury area",
+    "adminSpace": "Admin area",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "footer": {
+    "description": "A co-creation of the digital school La Plateforme and the Mobile Film Festival. Together to draw the new horizons of cinema.",
+    "legal": "Legal notices",
+    "press": "Press",
+    "contact": "Contact",
+    "copyright": "© 2026 MarsAI. All rights reserved."
+  },
+  "newsletter": {
+    "title": "Stay connected",
+    "email_placeholder": "Your email",
+    "subscribe_button": "Subscribe",
+    "success_message": "Thank you for subscribing to our newsletter!",
+    "error_message": "An error occurred while subscribing. Please try again later.",
+    "error_message_conflict": "Already subscribed !"
+  },
+  "hero_banner": {
+    "title_part1": "IMAGINE",
+    "title_part2": "DESIRABLE",
+    "title_part3": "FUTURES",
+    "subtitle": "The international festival of 60-second short films made by AI.",
+    "participate_button": "Participate",
+    "learn_more_button": "Learn more"
+  },
+  "acces": {
+    "title": "ACCESS",
+    "public_transport_title": "Public transport",
+    "public_transport_description": "Tram T2 - Arenc Le Silo stop. Metro M2 - Désirée Clary station.",
+    "car_title": "Car",
+    "car_description": "A55 motorway - Exit 2. Indigo Quai Du Lazaret car park at 500m.",
+    "address_title": "Address",
+    "address_description": "12 Rue D'Uzes, 13002 Marseille."
+  },
+  "access_denied": {
+    "title": "Access denied",
+    "description": "You do not have the necessary permissions to access this page."
+  },
+  "not_found": {
+    "title": "Page Not Found",
+    "description": "The page you are looking for does not exist."
+  },
+  "close": "Close",
+  "movies_thumbnails": {
+    "loading": "Loading...",
+    "error": "Error: ",
+    "error_status": "Error Status: ",
+    "image_placeholder": "Movie image",
+    "no_synopsis": "No synopsis found."
+  },
+  "main": {
+    "collaborator": "Collaborator"
+  },
+  "pagination": {
+    "results_per_page": "{{count}} results per page",
+    "page": "Page {{count}}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "status": {
+    "all": "All",
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "cancelled": "Cancelled",
+    "rejected": "Rejected",
+    "hybrid": "Hybrid",
+    "full_ai": "Full AI",
+    "type": "Type"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "book_seat": "Book my seat"
+  },
+  "form": {
+    "firstname": "Firstname",
+    "lastname": "Lastname",
+    "email": "Email",
+    "object": "Object",
+    "message": "Message"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "loading_tags": "Error loading tags",
+    "loading_movies": "Error loading movies"
+  },
+  "loading": {
+    "generic": "Loading...",
+    "tags": "Loading tags..."
+  },
+  "unsubscribe": {
+    "title": "Unsubscribe from newsletter",
+    "success_message": "You have been successfully unsubscribed from our newsletter."
+  },
+  "unbook": {
+    "title": "Unbook my seat",
+    "success_message": "Your seat has been successfully unbooked."
+  },
+  "yes": "Yes",
+  "no": "No"
+}

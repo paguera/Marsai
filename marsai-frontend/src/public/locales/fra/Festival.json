@@ -1,0 +1,132 @@
+{
+  "project": {
+    "title": "LE PROJET MARS AI",
+    "description": "Un événement hybride unique en France, réunissant la fine fleur de l'IA générative et de la création cinématographique.",
+    "cards": {
+      "one_minute_title": "1 MINUTE",
+      "one_minute_description": "Un format ultra-court pour maximiser l'impact créatif.",
+      "free_title": "GRATUITÉ",
+      "free_description": "Des conférences et workshops accessibles à tous.",
+      "for_all_title": "POUR TOUS",
+      "for_all_description": "Professionnels, étudiants et curieux sont les bienvenus.",
+      "expertise_title": "EXPERTISE",
+      "expertise_description": "Rencontrez les leaders mondiaux de l'IA, des experts internationaux."
+    }
+  },
+  "films": {
+    "title": "LES FILMS EN COMPÉTITION",
+    "description": "Découvrez une sélection d'œuvres pionnières qui explorent les nouvelles frontières de l'imaginaire assisté par l'Intelligence Artificielle.",
+    "selection_preview": "Aperçu sélection",
+    "see_all_button": "Voir tous les films",
+    "selection_title": "SÉLECTION DU FESTIVAL"
+  },
+  "objectives": {
+    "title": "OBJECTIFS DU FESTIVAL",
+    "cards": {
+      "human_title": "L'HUMAIN AU CENTRE",
+      "human_description": "Promouvoir l'innovation dans le domaine de l'IA générative et de la création cinématographique.",
+      "creative_challenge_title": "CHALLENGE CRÉATIF",
+      "creative_challenge_description": "Favoriser l'échange entre créateurs, experts et passionnés.",
+      "desirable_futures_title": "FUTURS SOUHAITABLES",
+      "desirable_futures_description": "Découvrir les nouvelles frontières de l'imaginaire assisté par l'Intelligence Artificielle."
+    }
+  },
+  "format": {
+    "title": "FORMAT DE LA SÉLÉCTION",
+    "subtitle": "Le parcours d'une oeuvre",
+    "cards": {
+      "months_title": "2 MOIS",
+      "months_subtitle": "APPEL A PROJETS",
+      "films_title": "50 FILMS",
+      "films_subtitle": "SÉLECTION OFFICIELLE",
+      "web_title": "WEB ET RESEAUX",
+      "web_subtitle": "DIFFUSION DIGITALE",
+      "festival_title": "FESTIVAL",
+      "festival_subtitle": "SALLES DE CINÉMA"
+    },
+    "participate_button": "Participer"
+  },
+  "conferences": {
+    "title": "DEUX JOURNÉES DE CONFÉRENCES GRATUITES",
+    "description": "Plongez au cœur des dernières avancées en IA générative avec des experts de renommée mondiale, des démonstrations en direct et des ateliers interactifs.",
+    "list": {
+      "item1": "Débats engagés sur l'éthique et le futur",
+      "item2": "Confrontations d'idées entre artistes et techniens",
+      "item3": "Interrogations stimulantes sur la création",
+      "item4": "Masterclasses menées par des experts IA"
+    },
+    "cards": {
+      "screenings_title": "PROJECTIONS",
+      "screenings_description": "Films en compétition et hors-compétition sur écran géant.",
+      "workshops_title": "WORKSHOPS",
+      "workshops_description": "Scénario, création et post-prod avec des experts de l'IA.",
+      "awards_title": "REMISE DES PRIX",
+      "awards_description": "Cinéastes, acteurs et créateurs renommés pour récompenser l'excellence."
+    }
+  },
+  "night": {
+    "title": "MARSAI NIGHT",
+    "date": "Le 13 juin",
+    "time": "À partir de 19h",
+    "subtitle": "Soirée Électro",
+    "description": "Une expérience immersive sonore et visuelle.",
+    "get_pass_button": "Obtenir mon pass"
+  },
+  "location": {
+    "title": "LE LIEU",
+    "cards": {
+      "platform_title": "LA PLATEFORME",
+      "platform_subtitle": "(ex-Docks-des-Suds)",
+      "platform_description": "4 000 m² d'espaces modulables dans le centre de Marseille, au cœur de l'écosystème numérique.",
+      "sugars_room_title": "SALLE DES SUCRES",
+      "sugars_room_description": "Futur sanctuaire des conférences et de la remise des prix de Mars.A.I. Un espace majestueux alliant patrimoine et technologie.",
+      "plaza_room_title": "SALLE PLAZA",
+      "plaza_room_description": "L'épicentre du festival : accueil, animations, workshops et restauration. Le point de rencontre de tous les participants."
+    }
+  },
+  "partners": {
+    "title": "PARTENAIRES & SPONSORS"
+  },
+  "decimals": {
+    "title": "EN CHIFFRES",
+    "countries": "+ 250 PAYS",
+    "movies": "+ 600 FILMS"
+  },
+  "agenda": {
+    "loading": "Chargement...",
+    "error": "Erreur: {{error}}",
+    "error_status": "Erreur Status: {{status}}",
+    "date": "13 JUIN 2026",
+    "location": "MARSEILLE",
+    "program_title": "PROGRAMME DES CONFERENCES",
+    "no_events": "Aucun événement n'est prévu pour le moment.",
+    "event_grid": {
+      "search_placeholder": "Rechercher",
+      "empty_message": "Aucun événement disponible.",
+      "no_date": "Date non spécifiée"
+    },
+    "event_details": {
+      "error_status": "Erreur Status: {{status}}",
+      "back_button": "Retour",
+      "start_at": "Commence à : {{date}}",
+      "unavailable": "Événement indisponible",
+      "booking_success": "Réservation confirmée !",
+      "booking_error_conflict": "Vous avez déjà réservé une place pour cet événement.",
+      "booking_error": "Une erreur est survenue lors de la réservation : {{error}}"
+    },
+    "workshop": {
+      "loading": "Chargement...",
+      "error": "Erreur: {{error}}",
+      "error_status": "Erreur Status: {{status}}",
+      "title": "WORKSHOPS",
+      "subtitle": "IA CREATIVE",
+      "description": "Découvrez nos formations intensives pour maîtriser les nouveaux outils de l'intelligence artificielle."
+    },
+    "workshop_card": {
+      "no_description": "Aucune description fournie.",
+      "book_button": "RESERVER MA PLACE",
+      "remaining_seats_one": "{{count}} place restante",
+      "remaining_seats_other": "{{count}} places restantes"
+    }
+  }
+}

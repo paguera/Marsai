@@ -1,0 +1,114 @@
+{
+  "header": {
+    "gallery": "Galerie",
+    "agenda": "Agenda",
+    "jury": "Jury",
+    "submit": "Soumettre un film",
+    "jurySpace": "Espace Jury",
+    "adminSpace": "Espace Admin",
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion"
+  },
+  "footer": {
+    "description": "Une co-création de l’école du numérique La Plateforme et le Mobile Film Festival. Ensemble pour dessiner les nouveaux horizons du cinéma.",
+    "legal": "Mentions légales",
+    "press": "Presse",
+    "contact": "Contact",
+    "copyright": "© 2026 MarsAI. Tous droits réservés."
+  },
+  "newsletter": {
+    "title": "Restez connectés",
+    "email_placeholder": "Votre email",
+    "subscribe_button": "S'inscrire",
+    "success_message": "Merci ! À très vite !",
+    "error_message": "Quelque chose s'est mal passé, réessayez plus tard",
+    "error_message_conflict": "Déjà inscrit !"
+  },
+  "hero_banner": {
+    "title_part1": "IMAGINEZ",
+    "title_part2": " DES FUTURS",
+    "title_part3": "SOUHAITABLES",
+    "subtitle": "Le festival international de courts-métrages de 60 secondes réalisés par IA.",
+    "participate_button": "Participer",
+    "learn_more_button": "En savoir plus"
+  },
+  "acces": {
+    "title": "ACCES",
+    "public_transport_title": "Transports en commun",
+    "public_transport_description": "Tram T2 - Arret Arenc Le Silo. Metro M2 - Station Désirée Clary.",
+    "car_title": "Voiture",
+    "car_description": "Autoroute A55 - Sortie 2. Parking Indigo Quai Du Lazaret à 500m.",
+    "address_title": "Adresse",
+    "address_description": "12 Rue D'Uzes, 13002 Marseille."
+  },
+  "access_denied": {
+    "title": "Accès refusé",
+    "description": "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+  },
+  "not_found": {
+    "title": "Page non trouvée",
+    "description": "La page que vous recherchez n'existe pas."
+  },
+  "close": "Fermer",
+  "movies_thumbnails": {
+    "loading": "Chargement...",
+    "error": "Erreur: {{error}}",
+    "error_status": "Erreur Status: {{status}}",
+    "image_placeholder": "Image du film",
+    "no_synopsis": "Aucun synopsis trouvé."
+  },
+  "main": {
+    "collaborator": "Collaborateur"
+  },
+  "pagination": {
+    "results_per_page": "{{count}} résultats par page",
+    "page": "Page {{count}}",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "status": {
+    "all": "Tous",
+    "pending": "En attente",
+    "accepted": "Accepté",
+    "cancelled": "Annulé",
+    "rejected": "Rejeté",
+    "hybrid": "Hybride",
+    "full_ai": "Full AI",
+    "type": "Type"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "book_seat": "Réserver ma place"
+  },
+  "form": {
+    "firstname": "Prénom",
+    "lastname": "Nom",
+    "email": "Email",
+    "object": "Objet",
+    "message": "Message"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue",
+    "loading_tags": "Erreur lors du chargement des tags",
+    "loading_movies": "Erreur lors du chargement des films"
+  },
+  "loading": {
+    "generic": "Chargement...",
+    "tags": "Chargement des tags..."
+  },
+  "unsubscribe": {
+    "title": "Se désinscrire de la newsletter",
+    "success_message": "Vous avez été désinscrit avec succès de notre newsletter."
+  },
+  "unbook": {
+    "title": "Annuler ma réservation",
+    "success_message": "Votre place a été annulée avec succès."
+  },
+  "yes": "Oui",
+  "no": "Non"
+}

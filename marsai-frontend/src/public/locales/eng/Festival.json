@@ -1,0 +1,132 @@
+{
+  "project": {
+    "title": "THE MARS AI PROJECT",
+    "description": "A unique hybrid event in France, bringing together the best of generative AI and cinematographic creation.",
+    "cards": {
+      "one_minute_title": "1 MINUTE",
+      "one_minute_description": "An ultra-short format to maximize creative impact.",
+      "free_title": "FREE",
+      "free_description": "Conferences and workshops accessible to all.",
+      "for_all_title": "FOR ALL",
+      "for_all_description": "Professionals, students, and the curious are welcome.",
+      "expertise_title": "EXPERTISE",
+      "expertise_description": "Meet the world leaders in AI, international experts."
+    }
+  },
+  "films": {
+    "title": "FILMS IN COMPETITION",
+    "description": "Discover a selection of pioneering works that explore the new frontiers of imagination assisted by Artificial Intelligence.",
+    "selection_preview": "Selection preview",
+    "see_all_button": "See all films",
+    "selection_title": "FESTIVAL SELECTION"
+  },
+  "objectives": {
+    "title": "FESTIVAL OBJECTIVES",
+    "cards": {
+      "human_title": "THE HUMAN AT THE CENTER",
+      "human_description": "Promote innovation in the field of generative AI and cinematographic creation.",
+      "creative_challenge_title": "CREATIVE CHALLENGE",
+      "creative_challenge_description": "Foster exchange between creators, experts, and enthusiasts.",
+      "desirable_futures_title": "DESIRABLE FUTURES",
+      "desirable_futures_description": "Discover the new frontiers of imagination assisted by Artificial Intelligence."
+    }
+  },
+  "format": {
+    "title": "SELECTION FORMAT",
+    "subtitle": "The journey of a work",
+    "cards": {
+      "months_title": "2 MONTHS",
+      "months_subtitle": "CALL FOR PROJECTS",
+      "films_title": "50 FILMS",
+      "films_subtitle": "OFFICIAL SELECTION",
+      "web_title": "WEB AND NETWORKS",
+      "web_subtitle": "DIGITAL BROADCAST",
+      "festival_title": "FESTIVAL",
+      "festival_subtitle": "CINEMA ROOMS"
+    },
+    "participate_button": "Participate"
+  },
+  "conferences": {
+    "title": "TWO DAYS OF FREE CONFERENCES",
+    "description": "Immerse yourself in the heart of the latest advances in generative AI with world-renowned experts, live demonstrations, and interactive workshops.",
+    "list": {
+      "item1": "Engaged debates on ethics and the future",
+      "item2": "Confrontations of ideas between artists and technicians",
+      "item3": "Stimulating questions about creation",
+      "item4": "Masterclasses led by AI experts"
+    },
+    "cards": {
+      "screenings_title": "SCREENINGS",
+      "screenings_description": "Films in and out of competition on a giant screen.",
+      "workshops_title": "WORKSHOPS",
+      "workshops_description": "Screenwriting, creation, and post-production with AI experts.",
+      "awards_title": "AWARDS CEREMONY",
+      "awards_description": "Renowned filmmakers, actors, and creators to reward excellence."
+    }
+  },
+  "night": {
+    "title": "MARSAI NIGHT",
+    "date": "June 13",
+    "time": "From 7 p.m.",
+    "subtitle": "Electro Party",
+    "description": "An immersive sound and visual experience.",
+    "get_pass_button": "Get my pass"
+  },
+  "location": {
+    "title": "THE VENUE",
+    "cards": {
+      "platform_title": "LA PLATEFORME",
+      "platform_subtitle": "(ex-Docks-des-Suds)",
+      "platform_description": "4,000 m² of modular spaces in the center of Marseille, at the heart of the digital ecosystem.",
+      "sugars_room_title": "SALLE DES SUCRES",
+      "sugars_room_description": "Future sanctuary for conferences and the Mars.A.I. awards ceremony. A majestic space combining heritage and technology.",
+      "plaza_room_title": "SALLE PLAZA",
+      "plaza_room_description": "The epicenter of the festival: reception, entertainment, workshops, and catering. The meeting point for all participants."
+    }
+  },
+  "partners": {
+    "title": "PARTNERS & SPONSORS"
+  },
+  "decimals": {
+    "title": "IN FIGURES",
+    "countries": "+ 250 COUNTRIES",
+    "movies": "+ 600 MOVIES"
+  },
+  "agenda": {
+    "loading": "Loading...",
+    "error": "Error: ",
+    "error_status": "Error Status: ",
+    "date": "JUNE 13, 2026",
+    "location": "MARSEILLE",
+    "program_title": "CONFERENCE PROGRAM",
+    "no_events": "No events are scheduled for the moment.",
+    "event_grid": {
+      "search_placeholder": "Search",
+      "empty_message": "No events available.",
+      "no_date": "Date not specified"
+    },
+    "event_details": {
+      "error_status": "Error Status: ",
+      "back_button": "Back",
+      "start_at": "Start at: {{date}}",
+      "unavailable": "Event unavailable",
+      "booking_success": "Reservation confirmed!",
+      "booking_error_conflict": "You have already booked a seat for this event.",
+      "booking_error": "An error occurred during reservation: {{error}}"
+    },
+    "workshop": {
+      "loading": "Loading...",
+      "error": "Error: ",
+      "error_status": "Error Status: ",
+      "title": "WORKSHOPS",
+      "subtitle": "CREATIVE AI",
+      "description": "Discover our intensive training courses to master the new tools of artificial intelligence."
+    },
+    "workshop_card": {
+      "no_description": "No description provided.",
+      "book_button": "BOOK MY SEAT",
+      "remaining_seats_one": "{{count}} seat remaining",
+      "remaining_seats_other": "{{count}} seats remaining"
+    }
+  }
+}

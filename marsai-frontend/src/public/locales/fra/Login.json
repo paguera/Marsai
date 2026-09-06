@@ -1,0 +1,19 @@
+{
+  "title": "Connexion",
+  "subtitle": "Informations de connexion",
+  "email_label": "Adresse e-mail",
+  "email_placeholder": "Adresse e-mail...",
+  "password_label": "Mot de passe",
+  "password_placeholder": "Mot de passe...",
+  "login_button": "Connexion",
+  "jury_title": "CONNEXION EN TANT QUE JURY",
+  "validation": {
+    "email_required": "L'email est requis",
+    "email_too_long": "L'email est trop long",
+    "email_invalid": "Format d'email invalide",
+    "password_too_short": "Le mot de passe doit faire au moins 6 caractères",
+    "password_too_long": "Le mot de passe est trop long",
+    "password_complexity": "Le mot de passe doit contenir au moins une majuscule, un chiffre et un caractère spécial",
+    "password_required": "Le mot de passe est requis"
+  }
+}

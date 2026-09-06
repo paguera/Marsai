@@ -1,0 +1,112 @@
+{
+  "welcome": "Bienvenue",
+  "description": "Voici votre espace d'administration personnalisé.",
+  "error_status": "Erreur Status: {{status}}",
+  "dashboard_global": {
+    "title": "Statistiques",
+    "subtitle": "VUE D'ENSEMBLE",
+    "description": "Analyse détaillée de la progression et des indicateurs de performance",
+    "error": "Erreur : {{message}}",
+    "card": {
+      "objective": "OBJECTIF : {{count}}",
+      "films_evaluated": "Films évalués par le jury",
+      "films_submitted": "Films soumis",
+      "completed": "{{percentage}}% complété",
+      "active_accounts": "Comptes réalisateur actif",
+      "participants": "Inscrits à un événement",
+      "rating_title": "Films notés par le jury",
+      "today": "+{{count}} aujourd'hui",
+      "selected_films": "Films sélectionnés",
+      "represented_countries": "Pays représentés"
+    }
+  },
+  "movies": {
+    "loading": "Chargement des films...",
+    "title": "Modération des films",
+    "subtitle": "FILMS SOUMIS",
+    "description": "Gérez l'intégralité des soumissions et gérez les mises en avant.",
+    "search_placeholder": "Rechercher un film..."
+  },
+  "movie_card": {
+    "author_placeholder": "placeholder auteur"
+  },
+  "user": {
+    "title": "Gestion des roles",
+    "subtitle": "LISTE DES UTILISATEURS ENREGISTRÉS",
+    "description": "Gérez tous les utilisateurs et leurs rôles.",
+    "table": {
+      "name": "Nom",
+      "firstname": "Prénom",
+      "email": "Email",
+      "role": "Rôle",
+      "action": "Action",
+      "no_role": "Aucun rôle attribué"
+    },
+    "button": {
+      "promote_jury": "Jury",
+      "promote_admin": "Admin",
+      "delete": "Supprimer"
+    }
+  },
+  "subscribers": {
+    "title": "Abonnés à la newsletter",
+    "description": "Ici vous pouvez voir les abonnés actuels",
+    "number": "Nombre total d'abonnés : {{count}}"
+  },
+  "register": {
+    "title": "Nouvel utilisateur",
+    "subtitle": "CRÉER UN NOUVEAU COMPTE",
+    "description": "Enregistrer de nouveaux utilisateurs ou membres du jury.",
+    "default_role_notice": "Par défaut l'utilisateur créé n'aura pas de rôle prédéfini"
+  },
+  "newsletters": {
+    "title": "Gestion newsletter",
+    "subtitle": "CRÉER & ENVOYER DES NEWSLETTERS",
+    "description": "Gérez vos abonnés et envoyez-leur des newsletters.",
+    "create_title": "Créer une Newsletter",
+    "send_title": "Envoyer une Newsletter",
+    "send_to_subscribers": "Envoyer une Newsletter spécifique à tous les abonnés actuels",
+    "object_label": "Objet",
+    "save_button": "Enregistrer",
+    "send_button": "Envoyer"
+  },
+  "events": {
+    "title": "Gestion évenements",
+    "subtitle": "ÉVÉNEMENTS PLANIFIÉS",
+    "description": "Gérez tous les événements et leurs détails.",
+    "add_button": "Ajouter l'événement",
+    "loading": "Chargement des événements...",
+    "search_placeholder": "Rechercher un événement...",
+    "add_title": "Ajouter un événement",
+    "title_label": "Titre requis",
+    "title_placeholder": "Titre",
+    "description_label": "Description requise",
+    "description_placeholder": "Description",
+    "status_label": "Statut requis",
+    "status_placeholder": "Statut (ex: Complété)",
+    "location_label": "Lieu requis",
+    "location_placeholder": "Lieu",
+    "start_at_label": "Date de début",
+    "start_at_placeholder": "10-10-2000",
+    "duration_label": "Nombre requis",
+    "duration_placeholder": "Durée (minutes)",
+    "created_at_label": "Date de création",
+    "created_at_placeholder": "Date de création (10-10-2000)",
+    "updated_at_label": "Date de mise à jour",
+    "updated_at_placeholder": "Date de mise à jour (10-10-2000)",
+    "published_at_label": "Date de publication",
+    "published_at_placeholder": "Date de publication (10-10-2000)",
+    "success_message": "Événement ajouté !",
+    "title_placeholder": "Titre de l'événement",
+    "description_placeholder": "Description détaillée",
+    "location_placeholder": "Lieu (ex: Marseille)",
+    "table": {
+      "title": "Titre",
+      "description": "Description",
+      "status": "Statut",
+      "date": "Date & Heure",
+      "duration": "Durée",
+      "location": "Lieu"
+    }
+  }
+}
