@@ -108,26 +108,6 @@ git clone git@github.com:paguera/Marsai.git
 cd Marsai
 ```
 
-> [!TIP]
-> Tous les sous-projets étant unifiés dans ce dépôt, un seul `git clone` suffit pour disposer immédiatement de l'intégralité du code et de la configuration de déploiement.
-
----
-
-### Étape 2 : Créer le réseau Docker externe
-
-Le fichier `docker-compose.yml` utilise un réseau externe nommé **`nas-net`**. Il permet aux conteneurs de communiquer entre eux et d'être exposés via un Reverse Proxy (Traefik, Nginx Proxy Manager, etc.).
-
-Créez ce réseau avant le premier démarrage :
-
-```bash
-docker network create nas-net
-```
-
-> [!NOTE]
-> Si ce réseau existe déjà sur votre machine hôte (ex: sur votre NAS), cette étape n'est pas nécessaire.
-
----
-
 ### Étape 3 : Configurer les variables d'environnement (`.env`)
 
 Copiez le modèle de configuration fourni puis adaptez les variables :
@@ -237,38 +217,6 @@ docker compose exec marsai-backend npm run create-admin admin@marsai.fr "SuperPa
 
 ---
 
-## 🌐 Accès et Reverse Proxy
-
-Par défaut, le fichier `docker-compose.yml` ne publie pas de ports directement sur l'hôte (`ports:` n'est pas utilisé) afin de privilégier le réseau isolé **`nas-net`**.
-
-### 1. Avec un Reverse Proxy (Recommandé en production)
-Si vous utilisez **Nginx Proxy Manager**, **Traefik** ou **Caddy** connecté à `nas-net` :
-
-* Pointez votre domaine Frontend (ex: `marsai.domaine.fr`) vers :
-  * **Hôte :** `marsai-frontend`
-  * **Port :** `80`
-* Pointez votre domaine API (ex: `api-marsai.domaine.fr`) vers :
-  * **Hôte :** `marsai-backend`
-  * **Port :** `3000`
-
-### 2. Accès direct en développement local (Optionnel)
-Si vous développez en local sans reverse proxy, vous pouvez exposer les ports directement sur votre machine en ajoutant la section `ports` dans `docker-compose.yml` :
-
-```yaml
-  marsai-frontend:
-    # ...
-    ports:
-      - "8080:80"
-
-  marsai-backend:
-    # ...
-    ports:
-      - "3000:3000"
-```
-Vous pourrez alors accéder au frontend sur `http://localhost:8080` et à l'API sur `http://localhost:3000`.
-
----
-
 ## 🛡️ Fonctionnement de l'Antivirus (Watchdog ClamAV)
 
 Le conteneur `marsai-watchdog` assure la sécurité en temps réel :
@@ -305,26 +253,3 @@ docker compose logs -f marsai-watchdog
 | **Vérifier l'état de santé de la BDD** | `docker compose ps marsai-db` |
 | **Accéder au shell d'un conteneur** | `docker compose exec marsai-backend bash` |
 | **Créer un administrateur** | `docker compose exec marsai-backend npm run create-admin` |
-
----
-
-## 🔧 Dépannage courant
-
-### Erreur : `network nas-net not found`
-Le réseau externe n'existe pas. Créez-le avec :
-```bash
-docker network create nas-net
-```
-
-### Le backend n'arrive pas à se connecter à la base de données
-1. Vérifiez que la base MariaDB est prête et en bonne santé :
-   ```bash
-   docker compose ps marsai-db
-   ```
-2. Vérifiez que les variables `MARSAI_DB_NAME`, `MARSAI_DB_USER` et `MARSAI_DB_PASSWORD` dans `.env` correspondent bien aux identifiants attendus.
-
-### Problème de permissions sur `marsai-uploads`
-Si le conteneur backend ou le watchdog ne parvient pas à écrire ou supprimer des fichiers :
-```bash
-sudo chmod -R 775 marsai-uploads
-```

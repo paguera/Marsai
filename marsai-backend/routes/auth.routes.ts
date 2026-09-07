@@ -6,7 +6,7 @@ import { validate } from "../middlewares/validate";
 
 const router = Router();
 
-router.post("/register", validate(UserRegisterSchema), usersController.addUser);
+router.post("/register", validate(UserRegisterSchema), authenticateToken(), authorizedRoles(["ADMIN"]), usersController.addUser);
 router.post("/login", validate(UserLoginSchema), usersController.loginUser);
 router.get(
   "/me",
