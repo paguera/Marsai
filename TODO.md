@@ -77,7 +77,7 @@ Ce document récapitule les chantiers techniques prioritaires pour consolider, s
 
 ## 7. 🧹 Qualité de Code & Maintenance
 
-- [ ] **Correction de syntaxe de middleware sur `/auth/register` :**
+- [x] **Correction de syntaxe de middleware sur `/auth/register` :**
   - Dans `marsai-backend/routes/auth.routes.ts`, passer `authenticateToken` au lieu de l'appel `authenticateToken()` (ce middleware attend directement `(req, res, next)` et non une factory).
 - [ ] **Suppression de route orpheline en doublon :**
   - Dans `marsai-backend/routes/admin.routes.ts`, supprimer la seconde déclaration de `router.delete("/event/:id")`.
