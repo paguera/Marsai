@@ -5,6 +5,7 @@ import upload from "../config/multer";
 import { validate } from "../middlewares/validate";
 import authenticateToken from "../middlewares/authenticateToken";
 import authorizedRoles from "../middlewares/authorizedRoles";
+import { uploadLimiter } from "../middlewares/rateLimiter";
 
 const router = Router();
 
@@ -124,9 +125,12 @@ router.get("/:id/collaborators", movieController.getMovieCollaborators);
 // Protection des notations : seul un JURY ou ADMIN peut noter un film (ou n'importe quel connecté si voulu)
 router.post("/:id/ratings", authenticateToken, authorizedRoles(["ADMIN", "JURY"]), movieController.postMovieRating);
 
-// --- Création de film (Publique) ---
+// --- Création de film (Réservée aux ADMIN et JURY) ---
 router.post(
   "/",
+  uploadLimiter,
+  authenticateToken,
+  authorizedRoles(["ADMIN", "JURY"]),
   upload.fields([
     { name: "movie", maxCount: 1 },
     { name: "image1", maxCount: 1 },

@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import FormInput from "../components/FormInput";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
 
 // -----------------------------------------------------------------------------
 // 1. SCHÉMAS DE VALIDATION (ZOD)
@@ -153,6 +154,7 @@ type SubmitMovieFormData = z.infer<ReturnType<typeof getSubmitMovieSchema>>;
 
 // Export du composant principal MVP
 export default function SubmitMovie() {
+  const { token } = useAuth();
   // Traduction (Namespace 'SubmitMovie' pour les labels, 'common' pour les boutons)
   const { t, i18n } = useTranslation(["SubmitMovie", "common"]);
 
@@ -335,6 +337,9 @@ export default function SubmitMovie() {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/movies`, {
         method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: formData, // Le navigateur gère automatiquement le Content-Type: multipart/form-data
       });
 

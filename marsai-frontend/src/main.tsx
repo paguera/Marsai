@@ -52,10 +52,10 @@ createRoot(document.getElementById("root")!).render(
             {/* Routes réservées au jury et aux administrateurs */}
             <Route element={<ProtectedRoute allowedRoles={["ADMIN", "JURY"]} />}>
               <Route path="/movies/jury" element={<MoviesJury />} />
+              <Route path="/submit" element={<SubmitMovie />} />
             </Route>
 
             <Route path="/movies/:id" element={<MovieDetails />} />
-            <Route path="/submit" element={<SubmitMovie />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
 

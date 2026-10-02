@@ -3,12 +3,13 @@ import eventsController, { CreateReservationSchema } from "../controllers/events
 import { validate } from "../middlewares/validate";
 import authenticateToken from "../middlewares/authenticateToken";
 import authorizedRoles from "../middlewares/authorizedRoles";
+import { emailActionLimiter } from "../middlewares/rateLimiter";
 
 const router = Router();
 
 router.get("/", eventsController.getAll);
 router.get("/bookings", authenticateToken, authorizedRoles(["ADMIN"]), eventsController.getReservations);
-router.post("/book", validate(CreateReservationSchema), eventsController.addReservation);
+router.post("/book", emailActionLimiter, validate(CreateReservationSchema), eventsController.addReservation);
 router.get("/unbook/:token", eventsController.removeReservation);
 router.get("/:id", eventsController.getOne);
 router.get("/stats/count", eventsController.getParticipantSum);

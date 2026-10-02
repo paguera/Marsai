@@ -53,11 +53,4 @@ router.post(
   eventsController.addEvent,
 );
 
-router.delete(
-  "/event/:id",
-  authenticateToken,
-  authorizedRoles(["ADMIN"]),
-  eventsController.deleteOne,
-);
-
 export default router;

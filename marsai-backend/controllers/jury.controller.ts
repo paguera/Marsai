@@ -6,9 +6,9 @@ const getRatingCount = async (req: Request, res: Response) => {
     const total = await juryModel.getRatingCount();
     res.json({ total });
   } catch (err: any) {
-    console.error("Database error:", err.message);
+    console.error("Erreur getRatingCount :", err);
     return res.status(500).json({
-      error: "Erreur de base de données lors de la récupération du total.",
+      error: "Une erreur interne est survenue.",
     });
   }
 };

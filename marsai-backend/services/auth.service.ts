@@ -2,7 +2,7 @@ import Users from "../models/auth.model";
 import bcrypt from "bcrypt";
 import jsonwebtoken from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "";
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_marsai";
 
 class AuthService {
   async register(data: any) {
@@ -31,7 +31,7 @@ class AuthService {
     const token = jsonwebtoken.sign(
       { userId: user.id, role: user.role },
       JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "8h" }
     );
 
     const { password: _, ...userWithoutPassword } = user;

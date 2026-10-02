@@ -1,80 +1,81 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
 /**
  * Configuration du stockage de fichiers avec Multer.
- * Définit la destination dynamique des fichiers ainsi que la génération de noms uniques
- * pour éviter les collisions de fichiers sur le serveur.
+ * Définit la destination dynamique des fichiers ainsi que la génération de noms aléatoires sécurisés
+ * pour éviter les collisions et toute tentative de Path Traversal.
  */
 const storage = multer.diskStorage({
-  // Détermination dynamique du dossier de destination en fonction du type de fichier
   destination: (req, file, callback) => {
-    let dest = "uploads/";
-    
-    // Les vidéos sont stockées dans uploads/videos/, les images dans uploads/images/
+    let dest = path.join(process.cwd(), "uploads");
+
     if (file.fieldname === "movie") {
-      dest += "videos/";
+      dest = path.join(dest, "videos");
     } else if (file.fieldname.startsWith("image")) {
-      dest += "images/";
+      dest = path.join(dest, "images");
     }
 
-    // Création récursive du dossier si celui-ci n'existe pas encore
     if (!fs.existsSync(dest)) {
       fs.mkdirSync(dest, { recursive: true });
     }
-    
+
     callback(null, dest);
   },
-  // Génération d'un nom de fichier unique basé sur le nom d'origine et un horodatage
   filename: (req, file, callback) => {
-    // Remplacement des espaces par des underscores dans le nom d'origine
-    const name = file.originalname.split(" ").join("_").split(".")[0];
-    const extension = path.extname(file.originalname);
-    
-    // Combinaison : NomNettoyé_Timestamp.extension (garantit l'unicité du fichier)
-    callback(null, name + "_" + Date.now() + extension);
+    // Génère un nom aléatoire sécurisé (16 bytes hex = 32 caractères)
+    const randomName = crypto.randomBytes(16).toString("hex");
+    const extension = path.extname(file.originalname).toLowerCase();
+    callback(null, `${randomName}_${Date.now()}${extension}`);
   },
 });
 
 /**
- * Filtre de validation pour restreindre les types de fichiers acceptés.
- * Sécurise le serveur en interdisant le téléversement de scripts malveillants ou de formats invalides.
+ * Filtre de validation strict pour restreindre les types de fichiers acceptés.
  */
-const fileFilter = (req: any, file: Express.Multer.File, callback: multer.FileFilterCallback) => {
+const fileFilter = (
+  req: any,
+  file: Express.Multer.File,
+  callback: multer.FileFilterCallback,
+) => {
   const allowedVideoExtensions = [".mp4", ".mov", ".avi", ".mkv"];
   const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-  
-  const extension = path.extname(file.originalname).toLowerCase();
 
-  // Validation basée sur le champ d'envoi du formulaire (fieldname)
+  const extension = path.extname(file.originalname).toLowerCase();
+  const mimetype = file.mimetype.toLowerCase();
+
   if (file.fieldname === "movie") {
-    if (allowedVideoExtensions.includes(extension)) {
-      callback(null, true); // Fichier accepté
+    if (
+      allowedVideoExtensions.includes(extension) &&
+      (mimetype.startsWith("video/") || mimetype === "application/octet-stream")
+    ) {
+      callback(null, true);
     } else {
       callback(new Error("Format vidéo non supporté (MP4, MOV, AVI, MKV uniquement)"));
     }
   } else if (file.fieldname.startsWith("image")) {
-    if (allowedImageExtensions.includes(extension)) {
-      callback(null, true); // Fichier accepté
+    if (
+      allowedImageExtensions.includes(extension) &&
+      mimetype.startsWith("image/")
+    ) {
+      callback(null, true);
     } else {
       callback(new Error("Format image non supporté (JPG, JPEG, PNG, WEBP uniquement)"));
     }
   } else {
-    callback(null, true);
+    callback(new Error("Type de champ inattendu pour le fichier téléversé."));
   }
 };
 
-/**
- * Initialisation du middleware de téléchargement Multer.
- * Configure le stockage, le filtre de validation, et définit une taille de fichier maximale.
- */
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 500 * 1024 * 1024, // Limite stricte à 500 Mo par fichier
-  }
+    fileSize: 500 * 1024 * 1024, // Limite à 500 Mo par fichier
+    files: 5, // Maximum 5 fichiers par requête multipart
+  },
 });
 
 export default upload;

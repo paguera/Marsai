@@ -3,10 +3,11 @@ import usersController, { UserLoginSchema, UserRegisterSchema } from "../control
 import authenticateToken from "../middlewares/authenticateToken";
 import authorizedRoles from "../middlewares/authorizedRoles";
 import { validate } from "../middlewares/validate";
+import { authLimiter } from "../middlewares/rateLimiter";
 
 const router = Router();
 router.post("/register", validate(UserRegisterSchema), authenticateToken, authorizedRoles(["ADMIN"]), usersController.addUser);
-router.post("/login", validate(UserLoginSchema), usersController.loginUser);
+router.post("/login", authLimiter, validate(UserLoginSchema), usersController.loginUser);
 router.get(
   "/me",
   authenticateToken,

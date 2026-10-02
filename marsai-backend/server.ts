@@ -14,41 +14,58 @@ import subscribersRoutes from "./routes/subscribers.routes";
 import newsletterRoutes from "./routes/newsletters.routes";
 import tagsRoutes from "./routes/tags.routes";
 
+import helmet from "helmet";
+import { globalLimiter } from "./middlewares/rateLimiter";
+
 // Initialiser l'application Express
 const app: Application = express();
 
-// Middleware : Parser les requêtes JSON
-app.use(express.json());
+// Masquer la signature d'Express
+app.disable("x-powered-by");
+
+// En-têtes de sécurité HTTP (Protection XSS, Clickjacking, MIME sniffing, HSTS)
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
+
+// Limiteur de requêtes global anti-DoS
+app.use(globalLimiter);
+
+// Middleware : Parser les requêtes JSON (limité à 10mb pour éviter les payload DoS)
+app.use(express.json({ limit: "10mb" }));
 
 // Configuration CORS
-const whitelist: (string | undefined)[] = [
+const isProduction = process.env.NODE_ENV === "production";
+const whitelist: string[] = [
   process.env.FRONT_URL,
   "https://marsai.paguera.fr",
   "http://100.80.76.84:8080",
   "http://nas:8080",
-]; // Liste des origines autorisées
+].filter(Boolean) as string[];
 
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    // Autoriser les requêtes sans origine (Postman, apps mobiles)
+    // Autoriser les requêtes sans origine (Postman, scripts locaux sécurisés)
     if (!origin) return callback(null, true);
 
     // Vérifier si l'origine est dans la liste blanche
     if (whitelist.includes(origin)) return callback(null, true);
 
-    // Autoriser les adresses IP locales pour le développement
-    if (
-      origin.startsWith("http://localhost") ||
-      origin.startsWith("http://127.0.0.1") ||
-      origin.startsWith("http://0.0.0.0") ||
-      origin.startsWith("http://192.168.")
-    )
-      return callback(null, true);
+    // Autoriser les adresses IP locales uniquement hors production
+    if (!isProduction) {
+      if (
+        origin.startsWith("http://localhost") ||
+        origin.startsWith("http://127.0.0.1") ||
+        origin.startsWith("http://0.0.0.0") ||
+        origin.startsWith("http://192.168.")
+      ) {
+        return callback(null, true);
+      }
+    }
 
-    // Autoriser l'origine de développement React (ex: http://localhost:5173)
-    if (origin === "http://localhost:5173") return callback(null, true);
-
-    // Bloquer les autres origines proprement sans lever d'exception 500
+    // Bloquer les autres origines
     callback(null, false);
   },
   credentials: true, // Autoriser les cookies et les en-têtes d'authentification
@@ -70,6 +87,19 @@ app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")
 app.use("/subscribers", subscribersRoutes);
 app.use("/newsletters", newsletterRoutes);
 app.use("/tags", tagsRoutes);
+
+// Middleware de gestion d'erreur centralisé (Empêche toute fuite d'informations sensibles)
+app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {
+  console.error("Erreur non gérée capturée par Express :", err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(err.status || 500).json({
+    error: isProduction
+      ? "Une erreur interne est survenue."
+      : err.message || "Erreur serveur.",
+  });
+});
 
 // Fonction principale pour démarrer le serveur
 async function startServer() {

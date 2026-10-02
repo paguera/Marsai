@@ -3,22 +3,40 @@ import { Movie, RatingData } from "../interfaces/movies.interfaces";
 import movieModel from "../models/movies.model";
 import { validationResult } from "express-validator";
 import movieService from "../services/movie.service";
+import fs from "fs";
+
+/**
+ * Nettoie les fichiers téléversés en cas d'erreur ou d'annulation (Rollback Uploads).
+ */
+const cleanupFiles = (files?: { [fieldname: string]: Express.Multer.File[] }) => {
+  if (!files) return;
+  Object.values(files).forEach((fileArray) => {
+    fileArray.forEach((file) => {
+      if (file.path && fs.existsSync(file.path)) {
+        fs.unlink(file.path, (err) => {
+          if (err) console.error("Erreur lors de la suppression du fichier temporaire :", file.path, err);
+        });
+      }
+    });
+  });
+};
 
 const addMovie = async (req: Request, res: Response) => {
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    cleanupFiles(files);
     return res.status(400).json({ errors: errors.array() });
   }
-  
+
   try {
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    
-    const movieFile = files['movie']?.[0];
-    const image1 = files['image1']?.[0];
-    const image2 = files['image2']?.[0];
-    const image3 = files['image3']?.[0];
+    const movieFile = files?.["movie"]?.[0];
+    const image1 = files?.["image1"]?.[0];
+    const image2 = files?.["image2"]?.[0];
+    const image3 = files?.["image3"]?.[0];
 
     if (!movieFile || !image1 || !image2 || !image3) {
+      cleanupFiles(files);
       return res.status(400).json({ error: "Tous les fichiers (vidéo + 3 images) sont requis." });
     }
     const data = req.body;
@@ -30,6 +48,7 @@ const addMovie = async (req: Request, res: Response) => {
       data.director_email
     );
     if (isDuplicate) {
+      cleanupFiles(files);
       return res.status(409).json({ error: "Ce film a déjà été soumis par ce réalisateur." });
     }
     const videoUrl = "/uploads/videos/" + movieFile.filename;
@@ -42,7 +61,7 @@ const addMovie = async (req: Request, res: Response) => {
       english_title: data.english_title,
       movie_path: videoUrl,
       cover_image: imageUrl1,
-      duration: data.duration ? parseInt(data.duration) : 0,
+      duration: data.duration ? parseInt(data.duration, 10) : 0,
       is_hybrid: data.is_hybrid,
       original_synopsis: data.original_synopsis,
       english_synopsis: data.english_synopsis,
@@ -74,8 +93,9 @@ const addMovie = async (req: Request, res: Response) => {
 
     res.status(201).json({ message: "Film et données associés ajoutés avec succès", id: movieId });
   } catch (error: any) {
-    console.error("ERREUR ADD MOVIE :", error.message);
-    return res.status(500).json({ error: "Server error: " + error.message });
+    cleanupFiles(files);
+    console.error("ERREUR ADD MOVIE :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue lors de l'enregistrement du film." });
   }
 };
 
@@ -90,8 +110,8 @@ const getAllMovies = async (
     const results = await movieModel.getAllMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR getAllMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -106,8 +126,8 @@ const getBestMovies = async (
     const results = await movieModel.getBestMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR getBestMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -116,16 +136,15 @@ const getMoviesSum = async (req: Request, res: Response) => {
     const total = await movieModel.getMoviesSum();
     res.json({ total });
   } catch (error: any) {
-    return res.status(500).json({
-      error: "Erreur de base de données lors de la récupération du total.",
-    });
+    console.error("ERREUR getMoviesSum :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
 const getMovieDetails = async (req: any, res: Response) => {
   const movieId = req.params.id ? parseInt(req.params.id, 10) : undefined;
   if (movieId === undefined || isNaN(movieId)) {
-    return res.status(400).json({ error: "Invalid movie ID" });
+    return res.status(400).json({ error: "ID de film invalide" });
   }
   try {
     const movie: any = await movieModel.getMovieDetails(movieId);
@@ -139,50 +158,54 @@ const getMovieDetails = async (req: any, res: Response) => {
     
     res.status(200).json(movie);
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR getMovieDetails :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
 const getMovieCollaborators = async (req: any, res: Response) => {
   const movieId = req.params.id ? parseInt(req.params.id, 10) : undefined;
   if (movieId === undefined || isNaN(movieId)) {
-    return res.status(400).json({ error: "Invalid movie ID" });
+    return res.status(400).json({ error: "ID de film invalide" });
   }
   try {
-    const results = await movieModel.getMovieCollaborators(movieId);
+    // Protection RGPD : les détails complets (email, tel, birthdate) ne sont exposés qu'aux administrateurs
+    const isAdmin = req.user && req.user.role === "ADMIN";
+    const results = isAdmin
+      ? await movieModel.getMovieCollaboratorsFull(movieId)
+      : await movieModel.getMovieCollaborators(movieId);
     res.status(200).json(results);
   } catch (error: any) {
-    console.error("ERREUR SQL DETAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR getMovieCollaborators :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
 const getMovieRatings = async (req: any, res: Response) => {
   const movieId = req.params.id ? parseInt(req.params.id, 10) : undefined;
   if (movieId === undefined || isNaN(movieId)) {
-    return res.status(400).json({ error: "Invalid movie ID" });
+    return res.status(400).json({ error: "ID de film invalide" });
   }
   try {
     const results = await movieModel.getMovieRatings(movieId);
     res.status(200).json(results);
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR getMovieRatings :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
 const getMovieTags = async (req: any, res: Response) => {
   const movieId = req.params.id ? parseInt(req.params.id, 10) : undefined;
   if (movieId === undefined || isNaN(movieId)) {
-    return res.status(400).json({ error: "Invalid movie ID" });
+    return res.status(400).json({ error: "ID de film invalide" });
   }
   try {
     const results = await movieModel.getMovieTags(movieId);
     res.status(200).json(results);
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR getMovieTags :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -191,9 +214,8 @@ const getDirectorsSum = async (req: Request, res: Response) => {
     const total = await movieModel.getDirectorsSum();
     res.json({ total });
   } catch (error: any) {
-    return res.status(500).json({
-      error: "Erreur de base de données lors de la récupération du total.",
-    });
+    console.error("ERREUR getDirectorsSum :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -219,8 +241,8 @@ const postMovieRating = async (req: any, res: Response) => {
       .status(201)
       .json({ message: "Note ajoutée avec succès", id: results.insertId });
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR postMovieRating :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -232,8 +254,8 @@ const changeMovieStatus = async (req: Request, res: Response) => {
     await movieModel.changeMovieStatus([status, id]);
     res.status(201).json({ message: "Status changé avec succes" });
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res.status(500).json({ error: "Database error: " + error.message });
+    console.error("ERREUR changeMovieStatus :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -249,8 +271,8 @@ const getAllMoviesByTag = async (
     const results = await movieModel.getAllMoviesByTag(tag, limit, offset);
     return res.status(200).json(results);
   } catch (err: any) {
-    console.error("Unexpected error : " + err.message);
-    return res.status(500).send("Erreur inattendue : " + err.message);
+    console.error("ERREUR getAllMoviesByTag :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -261,17 +283,15 @@ const getSelectedMovies = async (
   page: number,
 ) => {
   const offset = (page - 1) * limit;
-
   try {
     const results = await movieModel.getSelectedMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getSelectedMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getSelectedMoviesByTag = async (
   req: Request,
   res: Response,
@@ -284,12 +304,11 @@ const getSelectedMoviesByTag = async (
     const results = await movieModel.getSelectedMoviesByTag(tag, limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    console.error("ERREUR SQL DÉTAILLÉE :", error.message);
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getSelectedMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getPendingMovies = async (
   req: Request,
   res: Response,
@@ -301,9 +320,8 @@ const getPendingMovies = async (
     const results = await movieModel.getPendingMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getPendingMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -319,11 +337,11 @@ const getPendingMoviesByTag = async (
     const results = await movieModel.getPendingMoviesByTag(tag, limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getPendingMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getPendingHybridMovies = async (
   req: Request,
   res: Response,
@@ -335,11 +353,11 @@ const getPendingHybridMovies = async (
     const results = await movieModel.getPendingHybridMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getPendingHybridMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getPendingFullAIMovies = async (
   req: Request,
   res: Response,
@@ -351,11 +369,11 @@ const getPendingFullAIMovies = async (
     const results = await movieModel.getPendingFullAIMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getPendingFullAIMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getPendingHybridMoviesByTag = async (
   req: Request,
   res: Response,
@@ -372,11 +390,11 @@ const getPendingHybridMoviesByTag = async (
     );
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getPendingHybridMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getPendingFullAIMoviesByTag = async (
   req: Request,
   res: Response,
@@ -393,11 +411,11 @@ const getPendingFullAIMoviesByTag = async (
     );
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getPendingFullAIMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getSelectedHybridMovies = async (
   req: Request,
   res: Response,
@@ -409,11 +427,11 @@ const getSelectedHybridMovies = async (
     const results = await movieModel.getSelectedHybridMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getSelectedHybridMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getSelectedFullAIMovies = async (
   req: Request,
   res: Response,
@@ -425,11 +443,11 @@ const getSelectedFullAIMovies = async (
     const results = await movieModel.getSelectedFullAIMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getSelectedFullAIMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getSelectedHybridMoviesByTag = async (
   req: Request,
   res: Response,
@@ -446,11 +464,11 @@ const getSelectedHybridMoviesByTag = async (
     );
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getSelectedHybridMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getSelectedFullAIMoviesByTag = async (
   req: Request,
   res: Response,
@@ -467,11 +485,11 @@ const getSelectedFullAIMoviesByTag = async (
     );
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getSelectedFullAIMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getRejectedHybridMovies = async (
   req: Request,
   res: Response,
@@ -483,11 +501,11 @@ const getRejectedHybridMovies = async (
     const results = await movieModel.getRejectedHybridMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getRejectedHybridMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getRejectedFullAIMovies = async (
   req: Request,
   res: Response,
@@ -499,11 +517,11 @@ const getRejectedFullAIMovies = async (
     const results = await movieModel.getRejectedFullAIMovies(limit, offset);
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getRejectedFullAIMovies :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getRejectedHybridMoviesByTag = async (
   req: Request,
   res: Response,
@@ -520,11 +538,11 @@ const getRejectedHybridMoviesByTag = async (
     );
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getRejectedHybridMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getRejectedFullAIMoviesByTag = async (
   req: Request,
   res: Response,
@@ -541,11 +559,11 @@ const getRejectedFullAIMoviesByTag = async (
     );
     res.status(200).json(results);
   } catch (error: any) {
-    return res
-      .status(500)
-      .json({ error: "Erreur de base de données : " + error.message });
+    console.error("ERREUR getRejectedFullAIMoviesByTag :", error);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getRejectedMovies = async (
   req: Request,
   res: Response,
@@ -553,38 +571,45 @@ const getRejectedMovies = async (
   page: number,
 ) => {
   const offset = (page - 1) * limit;
-
   try {
     const results = await movieModel.getRejectedMovies(limit, offset);
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur Serveur : " + err.message });
+    console.error("ERREUR getRejectedMovies :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getAcceptedMoviesCount = async (req: Request, res: Response) => {
   try {
     const results = await movieModel.getAcceptedMoviesCount();
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur Serveur : " + err.message });
+    console.error("ERREUR getAcceptedMoviesCount :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getHybridCount = async (req: Request, res: Response) => {
   try {
     const results = await movieModel.getHybridCount();
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur Serveur : " + err.message });
+    console.error("ERREUR getHybridCount :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 const getFullAICount = async (req: Request, res: Response) => {
   try {
     const results = await movieModel.getFullAICount();
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur Serveur : " + err.message });
+    console.error("ERREUR getFullAICount :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
+
 async function getHybridMovies(
   req: Request,
   res: Response,
@@ -596,9 +621,11 @@ async function getHybridMovies(
     const results = await movieModel.getHybrid(limit, offset);
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur serveur : " + err.message });
+    console.error("ERREUR getHybridMovies :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 }
+
 async function getHybridMoviesByTag(
   req: Request,
   res: Response,
@@ -611,9 +638,11 @@ async function getHybridMoviesByTag(
     const results = await movieModel.getHybridByTag(limit, offset, tag);
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur serveur : " + err.message });
+    console.error("ERREUR getHybridMoviesByTag :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 }
+
 async function getFullAIMovies(
   req: Request,
   res: Response,
@@ -625,9 +654,11 @@ async function getFullAIMovies(
     const results = await movieModel.getFullAI(limit, offset);
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur serveur : " + err.message });
+    console.error("ERREUR getFullAIMovies :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 }
+
 async function getFullAIMoviesByTag(
   req: Request,
   res: Response,
@@ -640,7 +671,8 @@ async function getFullAIMoviesByTag(
     const results = await movieModel.getFullAIByTag(limit, offset, tag);
     res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ error: "Erreur serveur : " + err.message });
+    console.error("ERREUR getFullAIMoviesByTag :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 }
 
@@ -648,11 +680,11 @@ async function getCountriesTotal(req: Request, res: Response) {
   try {
     const results = await movieModel.getTotalCountries();
     res.status(200).json(results);
-  } catch(err: any) {
-    return res.status(500).json({error: "Erreur serveur : " + err.message});
+  } catch (err: any) {
+    console.error("ERREUR getCountriesTotal :", err);
+    return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 }
-
 
 export default {
   addMovie,

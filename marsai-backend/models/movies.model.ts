@@ -306,6 +306,13 @@ const getMovieDetails = async (movieId: number | undefined) => {
 };
 
 const getMovieCollaborators = async (movieId: number | undefined) => {
+  const query =
+    "SELECT id, movie_id, firstname, lastname, contribution, gender FROM collaborator WHERE movie_id = ?";
+  const [rows] = await db.query(query, [movieId]);
+  return rows;
+};
+
+const getMovieCollaboratorsFull = async (movieId: number | undefined) => {
   const query = "SELECT * FROM collaborator WHERE movie_id = ?";
   const [rows] = await db.query(query, [movieId]);
   return rows;
@@ -496,6 +503,7 @@ export default {
   getUserRatingForMovie,
   checkDuplicateMovie,
   getMovieCollaborators,
+  getMovieCollaboratorsFull,
   getDirectorsSum,
   postMovieRating,
   getTotalCountries,

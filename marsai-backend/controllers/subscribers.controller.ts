@@ -4,16 +4,15 @@ import subscribersModel from "../models/subscribers.model";
 import sendEmail from "../services/email";
 import { sign, verify } from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_marsai";
 
 // subscribing to a newsletter
 async function subscribeNewsletter(req: any, res: any): Promise<void> {
   const email = req.body.email;
   const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
 
-  if (!email || typeof email !== "string") {
-    console.error("Invalid email address provided for subscription.");
-    return res.status(400).send("Invalid email address.");
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    return res.status(400).json({ error: "Adresse email invalide." });
   }
 
   try {
@@ -21,16 +20,14 @@ async function subscribeNewsletter(req: any, res: any): Promise<void> {
     const results: any = await subscribersModel.getSubscribersByEmail(email);
 
     if (results && results.length > 0) {
-      console.warn(`L'adresse email ${email} est déjà inscrite à la newsletter.`);
-      return res.status(409).send("Email is already subscribed.");
+      return res.status(409).json({ error: "Cette adresse email est déjà inscrite." });
     }
 
     // Add subscriber to the database
     await subscribersModel.addSubscriber(email);
-    console.info(`Inscription réussie de ${email} à la newsletter !`);
 
-    // Generate unsubscribe token
-    const unsubscribeToken = sign({ email }, JWT_SECRET);
+    // Generate unsubscribe token with 30 days expiration
+    const unsubscribeToken = sign({ email }, JWT_SECRET, { expiresIn: "30d" });
     const unsubscribeLink = `${baseUrl}/subscribers/unsubscribe/${unsubscribeToken}`;
 
     const attach: Attachment[] = [

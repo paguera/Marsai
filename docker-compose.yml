@@ -40,6 +40,13 @@ services:
       - DB_PORT=3306
     volumes:
       - ./marsai-uploads:/app/uploads:z
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1024M
     depends_on:
       marsai-db:
         condition: service_healthy
@@ -57,26 +64,19 @@ services:
       - "8080:80"
     networks:
       - nas-net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
     depends_on:
       marsai-backend:
         condition: service_started
 
-  # --- MARSAI: ANTIVIRUS WATCHDOG ---
-  marsai-watchdog:
-    build:
-      context: ./marsai-clamav-watchdog
-    image: marsai-watchdog:latest
-    container_name: marsai-watchdog
-    restart: always
-    volumes:
-      - ./marsai-uploads:/scandir:z
-      - marsai-clamav-db:/var/lib/clamav
-    networks:
-      - nas-net
-
 volumes:
   marsai-db-data:
-  marsai-clamav-db:
 
 networks:
   nas-net:

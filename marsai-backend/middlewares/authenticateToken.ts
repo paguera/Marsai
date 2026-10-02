@@ -1,37 +1,41 @@
-const jwt = require("jsonwebtoken");
-import { Request, Response } from "express";
-require("dotenv").config();
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
-// Fonction d'authentification du token
-const authenticateToken: any = (
-  req: any,
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_marsai";
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: number;
+    role: string;
+  };
+}
+
+/**
+ * Middleware d'authentification par jeton JWT (Bearer Token).
+ */
+const authenticateToken = (
+  req: AuthenticatedRequest,
   res: Response,
-  next: Function,
+  next: NextFunction,
 ): any => {
-  // Récupération du token de l'en-tête d'autorisation
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).send("Accès refusé");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Accès refusé. Jeton d'authentification manquant." });
   }
-  // Extraction du token
+
   const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Jeton d'authentification invalide." });
+  }
 
-  // Vérification du token
-  jwt.verify(
-    token,
-    (process.env.JWT_SECRET as string).trim(),
-    (err: Error, decoded: any) => {
-      // Gestion des tokens invalides ou expiries
-      if (err) {
-        return res.status(401).send("Token invalide ou expiré");
-      }
+  jwt.verify(token, JWT_SECRET.trim(), (err: any, decoded: any) => {
+    if (err) {
+      return res.status(401).json({ error: "Jeton expiré ou invalide." });
+    }
 
-      // Le token est valide, on ajoute les informations décodées à la requête
-      req.user = decoded;
-      next();
-    },
-  );
+    req.user = decoded;
+    next();
+  });
 };
 
-// Exportation de la fonction d'authentification
 export default authenticateToken;

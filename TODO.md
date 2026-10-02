@@ -1,89 +1,83 @@
-# 📋 Feuille de route technique & Sécurité (TODO)
+# 📋 Feuille de Route & Audit de Sécurité (TODO)
 
-Ce document récapitule les chantiers techniques prioritaires pour consolider, sécuriser et fiabiliser la plateforme **MarsAI**.
-
----
-
-## 1. 🛡️ Validation des Fichiers & Type MIME (Backend)
-
-- [ ] **Détection réelle du type MIME (Magic Numbers) :**
-  - Actuellement dans `marsai-backend/config/multer.ts`, le filtrage repose uniquement sur l'extension du nom (`path.extname(file.originalname)`).
-  - Intégrer une vérification binaire réelle (via la librairie `file-type`) sur le flux ou le buffer pour s'assurer qu'un exécutable ou script malveillant renommé (ex. `payload.php.mp4`) ne soit pas accepté.
-  - Vérifier également le champ `file.mimetype` transmis par le client.
-- [ ] **Nettoyage automatique des fichiers orphelins (Rollback Uploads) :**
-  - Multer écrit les fichiers (jusqu'à 500 Mo par vidéo) sur le disque *avant* la validation des champs texte (`validateSubmitMovieForm`), la détection de doublons ou la transaction SQL.
-  - Mettre en place un mécanisme de nettoyage (`fs.unlink`) pour purger immédiatement les fichiers téléversés si la validation échoue ou si une erreur survient lors de l'insertion en BDD.
+Ce document récapitule l'ensemble des vulnérabilités identifiées lors de l'audit de sécurité approfondi ainsi que l'état d'avancement des chantiers techniques de durcissement et d'allègement de la plateforme **MarsAI**.
 
 ---
 
-## 2. 🔐 Authentification & Sécurité des Sessions (Cookies HttpOnly)
-
-- [ ] **Migration du stockage JWT vers les cookies `httpOnly` :**
-  - Remplacer le stockage actuel du token dans le `localStorage` du navigateur (vulnérable aux attaques XSS) par des cookies sécurisés : `httpOnly: true`, `secure: true` (en production), `sameSite: 'lax'` (ou `'strict'`).
-- [ ] **Configuration Backend (Express) :**
-  - Installer et brancher `cookie-parser`.
-  - Adapter le contrôleur d'authentification (`marsai-backend/controllers/auth.controller.ts`) pour injecter le cookie lors du `login`.
-  - Adapter le middleware `marsai-backend/middlewares/authenticateToken.ts` pour lire le token depuis `req.cookies.token` (avec repli sur l'en-tête `Authorization: Bearer` pour la compatibilité API/scripts).
-  - Créer un endpoint `POST /auth/logout` pour révoquer le cookie côté serveur (`res.clearCookie`).
-- [ ] **Configuration Frontend (React / Vite) :**
-  - Mettre à jour les appels `fetch` / `axios` pour inclure les cookies de session (`credentials: 'include'`).
-  - Mettre à jour `AuthContext.tsx` pour hydrater l'utilisateur au chargement via l'appel `/auth/me` sans dépendre de `localStorage`.
-- [ ] **Protection CSRF :**
-  - Mettre en place une protection contre les requêtes inter-sites forgées (CSRF) pour les opérations de modification d'état.
+## 🎯 0. Décision d'Architecture : Allègement du Serveur de Production
+- [x] **Protection de la soumission de films (`POST /movies` et route `/submit`) :**
+  - Restreinte exclusivement aux rôles `ADMIN` et `JURY`.
+  - Contrôle d'authentification et d'autorisation appliqué *avant* le middleware de téléversement `multer`.
+- [x] **Désactivation de ClamAV Watchdog :**
+  - Suppression/Désactivation du conteneur lourd ClamAV (`marsai-watchdog`) dans `docker-compose.yml` pour libérer ~1 Go de RAM et de la charge CPU sur le serveur/NAS.
 
 ---
 
-## 3. ⚖️ Protection des Données Personnelles (RGPD)
+## 🔴 Priorité P0 : Failles Critiques & Risques Immédiats
 
-- [ ] **Filtrage des données sur `GET /movies/:id/collaborators` :**
-  - Cette route est actuellement publique et retourne l'intégralité de la table `collaborator` (`SELECT *`).
-  - Elle expose en clair les adresses email, numéros de téléphone, dates de naissance et villes des réalisateurs et membres de l'équipe.
-  - Filtrer la réponse publique pour ne renvoyer que les informations publiques (`firstname`, `lastname`, `contribution`) et réserver l'accès aux données personnelles aux administrateurs (`ADMIN`).
+- [x] **1. Rate Limiting & Protection Anti-Brute Force / Anti-DoS :**
+  - **Résolu :** `express-rate-limit` installé et configuré avec des règles granulaires :
+    - `authLimiter` (10 tentatives / 15 min) sur `/auth/login`.
+    - `emailActionLimiter` (15 requêtes / 15 min) sur `/events/book` et `/subscribers/subscribe`.
+    - `uploadLimiter` (20 soumissions / 15 min) sur `/movies`.
+    - `globalLimiter` (500 requêtes / 15 min) sur l'ensemble de l'API Express.
 
----
+- [x] **2. Masquage des erreurs internes de Base de Données (Information Disclosure) :**
+  - **Résolu :** Suppression des fuites `error.message` / `Database error` dans l'ensemble des contrôleurs (`movies`, `events`, `auth`, `admin`, `tags`, `jury`, `newsletters`, `subscribers`).
+  - Remplacement par des réponses JSON sécurisées et standardisées (`{ error: "Une erreur interne est survenue." }`) avec journalisation serveur détaillée.
+  - Ajout d'un middleware d'erreur centralisé dans `server.ts`.
 
-## 4. 🧱 Sécurité Globale de l'API & Gestion des Erreurs
-
-- [ ] **En-têtes de sécurité HTTP :**
-  - Installer et intégrer le middleware `helmet` dans `server.ts` (protection XSS, Content-Security-Policy, HSTS, X-Content-Type-Options).
-- [ ] **Limitation de débit (Rate Limiting) :**
-  - Installer `express-rate-limit` pour protéger les routes sensibles contre les attaques par force brute (notamment `POST /auth/login` et la soumission de films `POST /movies`).
-- [ ] **Middleware global de gestion des erreurs :**
-  - Définir un middleware d'erreur centralisé (`app.use((err, req, res, next) => ...)`) dans Express.
-  - Éviter d'exposer les messages d'erreurs SQL internes aux clients (`Database error: ...`).
-  - Standardiser le format JSON des erreurs renvoyées.
+- [x] **3. Protection contre l'Injection HTML dans les E-mails Transactionnels :**
+  - **Résolu :** Création d'un utilitaire `escapeHtml` (`utils/sanitize.ts`). Échappement systématique des entrées utilisateurs (`firstname`, `lastname`, `title`, `location`) dans les templates de confirmation de réservation et d'annulation.
 
 ---
 
-## 5. 🦠 Synchronisation Antivirus (Watchdog ClamAV) & BDD
+## 🟠 Priorité P1 : Sécurité HTTP, Sessions & En-têtes
 
-- [ ] **Synchronisation avec la base de données :**
-  - Le watchdog supprime actuellement le fichier infecté avec `rm -f "$FILE"`, mais la BDD conserve la référence au média.
-  - Ajouter un mécanisme (script/webhook/requête SQL) permettant de basculer automatiquement le film infecté en statut `Rejected` ou `Infected` et d'alerter les administrateurs.
-- [ ] **Zone de quarantaine (Staging) :**
-  - Téléverser temporairement les médias dans un répertoire de quarantaine non accessible publiquement, puis les déplacer dans `uploads/` uniquement après validation par ClamAV.
+- [x] **4. En-têtes de Sécurité HTTP (`helmet`) & Restriction CORS :**
+  - **Résolu :**
+    - `helmet` intégré sur Express avec politique de ressources cross-origin sécurisée.
+    - Désactivation de l'en-tête de signature `x-powered-by`.
+    - CORS conditionné à l'environnement : liste blanche stricte en production, déblocage des IPs locales réservé au développement.
+
+- [x] **5. Expiration des Jetons JWT d'Annulation & Désinscription :**
+  - **Résolu :**
+    - Token d'annulation d'événement (`unbookingToken`) limité à une validité de 7 jours.
+    - Token de désinscription newsletter (`unsubscribeToken`) limité à 30 jours.
+    - Token d'authentification utilisateur (`login`) limité à 8h.
+
+- [ ] **6. Migration de l'Authentification vers des Cookies `httpOnly` :**
+  - [ ] Installer et configurer `cookie-parser` dans Express.
+  - [ ] Stocker le token de session dans un cookie `httpOnly`, `secure`, `sameSite: 'lax'`.
+  - [ ] Adapter `AuthContext.tsx` et les requêtes `fetch` (`credentials: 'include'`).
 
 ---
 
-## 6. 🐳 DevOps, Docker & Déploiement
+## 🟡 Priorité P2 : Durcissement des Fichiers & Données Personnelles (RGPD)
 
-- [ ] **Optimisation du Dockerfile Backend pour la production :**
-  - Épingler une version Node.js LTS légère (`node:22-bookworm-slim` ou `node:22-alpine`) au lieu de `node:latest`.
-  - Remplacer `ts-node server.ts` en production par un build compilé (`tsc`) exécuté avec `node dist/server.js`.
-  - Retirer `npm audit fix --force` du processus de build pour éviter des ruptures imprévues de dépendances.
-  - Exécuter le conteneur avec l'utilisateur non-privilégié `USER node`.
+- [x] **7. Durcissement des Téléversements & Génération de Noms Sécurisés :**
+  - **Résolu :** `config/multer.ts` génère désormais des noms aléatoires cryptographiques (`crypto.randomBytes`) pour bannir tout risque de *Path Traversal*.
+  - Double vérification : validation de l'extension ET du `mimetype` vidéo/image.
+
+- [x] **8. Nettoyage Automatique des Fichiers Orphelins (Upload Rollback) :**
+  - **Résolu :** Implémentation du helper `cleanupFiles` dans `movies.controller.ts` pour supprimer immédiatement les fichiers temporaires du disque si la validation échoue, si le film est en doublon ou si l'insertion BDD échoue.
+
+- [x] **9. Filtrage RGPD des Données Collaborateurs (`GET /movies/:id/collaborators`) :**
+  - **Résolu :** La requête publique ne retourne plus que les champs non sensibles (`id`, `movie_id`, `firstname`, `lastname`, `contribution`, `gender`). L'exposition complète (email, téléphone, date de naissance, ville) est restreinte aux administrateurs authentifiés.
 
 ---
 
-## 7. 🧹 Qualité de Code & Maintenance
+## 🟢 Priorité P3 : DevOps, Docker Hardening & Qualité de Code
 
-- [x] **Correction de syntaxe de middleware sur `/auth/register` :**
-  - Dans `marsai-backend/routes/auth.routes.ts`, passer `authenticateToken` au lieu de l'appel `authenticateToken()` (ce middleware attend directement `(req, res, next)` et non une factory).
-- [ ] **Suppression de route orpheline en doublon :**
-  - Dans `marsai-backend/routes/admin.routes.ts`, supprimer la seconde déclaration de `router.delete("/event/:id")`.
-- [ ] **Unification de la configuration ESLint :**
-  - Supprimer le doublon entre `eslint.config.js` et `eslint.config.mjs` dans le backend.
-  - Ajouter le script `"lint": "eslint ."` dans `marsai-backend/package.json`.
-- [ ] **Tests automatisés :**
-  - Créer les premiers tests d'intégration backend (avec `vitest` et `supertest`) pour valider les routes d'authentification et de soumission de films.
-  - Mettre en place des tests de composants clés sur le frontend.
+- [x] **10. Durcissement des Conteneurs Docker & Compose :**
+  - **Résolu :**
+    - `marsai-backend/Dockerfile` refondu en **Multi-stage build** basé sur `node:22-alpine` avec compilation JavaScript pure (`dist/server.js`) au lieu de `ts-node`.
+    - Exécution du processus sous l'utilisateur non-privilégié `USER node`.
+    - Suppression de `npm audit fix --force` des Dockerfiles.
+    - Ajout de `no-new-privileges:true` et de quotas de ressources CPU / RAM sur le backend et le frontend dans `docker-compose.yml`.
+
+- [x] **11. Nettoyage de Code & Qualité :**
+  - **Résolu :**
+    - Suppression de la route orpheline en doublon `router.delete("/event/:id")` dans `marsai-backend/routes/admin.routes.ts`.
+    - Suppression du doublon `eslint.config.js` (unifié sur `eslint.config.mjs`).
+    - Correction de la signature de `getPendingMoviesByTag` dans `movies.controller.ts`.

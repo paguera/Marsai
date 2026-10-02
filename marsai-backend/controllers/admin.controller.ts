@@ -8,7 +8,8 @@ const deleteEvent = async (req: Request, res: Response) => {
     const results = await adminModel.deleteEvent(id);
     res.json(results);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Erreur deleteEvent:", err);
+    res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -17,7 +18,8 @@ const getAllUsers = async (req: Request, res: Response) => {
     const results = await adminModel.getAllUsers();
     res.json(results);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Erreur getAllUsers:", err);
+    res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -43,7 +45,8 @@ const promoteToAdmin = async (req: Request, res: Response) => {
       res.json(results);
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Erreur promoteToAdmin:", err);
+    res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
@@ -67,17 +70,22 @@ const promoteToJury = async (req: Request, res: Response) => {
       res.json(results);
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Erreur promoteToJury:", err);
+    res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 
-const deleteUser = async (req: Request, res: Response) => {
+const deleteUser = async (req: any, res: Response) => {
   const { id } = req.params;
+  if (req.user && String(req.user.userId) === String(id)) {
+    return res.status(400).json({ error: "Impossible de supprimer votre propre compte administrateur." });
+  }
   try {
     const results = await adminModel.deleteUser(id);
     res.json(results);
   } catch (err) {
-    res.status(500).send("Erreur serveur");
+    console.error("Erreur deleteUser:", err);
+    res.status(500).json({ error: "Une erreur interne est survenue." });
   }
 };
 

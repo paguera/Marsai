@@ -1,21 +1,27 @@
-FROM docker.io/library/node:latest
+# Étape 1 : Build de l'application TypeScript
+FROM node:22-alpine AS builder
 WORKDIR /app
-
-# Installation de toutes les dépendances
 COPY package*.json ./
-RUN npm install
-RUN npm audit fix
-RUN npm audit fix --force
-
-# Installation globale de ts-node pour plus de stabilité
-RUN npm install -g ts-node typescript
-
+RUN npm ci
 COPY . .
+RUN npm run build
 
-# Dossier pour les images
-RUN mkdir -p uploads
+# Étape 2 : Image d'exécution de production allégée et durcie
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/services/welcome.jpg ./services/welcome.jpg
+
+# Création des dossiers d'uploads avec permissions attribuées à l'utilisateur non-root 'node'
+RUN mkdir -p uploads/videos uploads/images && chown -R node:node /app
+
+USER node
 
 EXPOSE 3000
 
-# On lance avec ts-node directement (compatible avec les imports sans extensions)
-CMD ["ts-node", "server.ts"]
+CMD ["node", "dist/server.js"]
