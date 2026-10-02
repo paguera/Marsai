@@ -6,8 +6,9 @@
   "scripts": {
     "test": "vitest",
     "dev": "nodemon --exec ts-node server.ts",
-    "build": "tsc server.ts --outDir dist --esModuleInterop --skipLibCheck --target es2020 --moduleResolution node",
-    "create-admin": "ts-node scripts/create-admin.ts"
+    "build": "tsc server.ts scripts/create-admin.ts --outDir dist --esModuleInterop --skipLibCheck --target es2020 --moduleResolution node",
+    "create-admin": "node dist/scripts/create-admin.js",
+    "create-admin:dev": "ts-node scripts/create-admin.ts"
   },
   "keywords": [],
   "author": "",

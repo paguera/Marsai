@@ -1,8 +1,8 @@
 # 🚀 MarsAI — Plateforme & Monorepo
 
-> **MarsAI** est une plateforme complète dédiée au festival du film d'IA, orchestrant la diffusion des œuvres, l'espace jury et les événements. Déployée sous Docker (React, API Node.js, MariaDB), la stack intègre un antivirus ClamAV en temps réel analysant chaque média téléversé pour garantir une expérience à la fois fluide et ultra-sécurisée.
+> **MarsAI** est une plateforme web complète dédiée au festival international du film d'IA, orchestrant la diffusion des œuvres en compétition, l'espace d'évaluation du jury, la gestion des événements et la billetterie. Déployée sous Docker (React, API Node.js / Express, MariaDB), la stack intègre les meilleures pratiques de sécurité et d'optimisation des performances.
 
-Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo** : l'interface utilisateur frontend, l'API backend, la base de données, la sécurité antivirus en temps réel et l'orchestration Docker.
+Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo** : interface utilisateur frontend, API backend sécurisée, base de données MariaDB et orchestration Docker pour la production.
 
 ---
 
@@ -18,7 +18,7 @@ Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo*
    - [Étape 5 : Démarrer la stack](#étape-5--démarrer-la-stack)
    - [Étape 6 : Créer le premier compte administrateur](#étape-6--créer-le-premier-compte-administrateur)
 5. [Accès et Reverse Proxy](#-accès-et-reverse-proxy)
-6. [Fonctionnement de l'Antivirus (Watchdog ClamAV)](#-fonctionnement-de-lantivirus-watchdog-clamav)
+6. [Sécurité & Durcissement](#-sécurité--durcissement)
 7. [Commandes utiles au quotidien](#-commandes-utiles-au-quotidien)
 8. [Dépannage courant](#-dépannage-courant)
 
@@ -26,50 +26,45 @@ Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo*
 
 ## 🏗️ Architecture de la stack
 
-La stack est composée de 4 services orchestrés via Docker Compose :
+La stack de production est orchestrée via **Docker Compose** et connectée à un réseau externe (`nas-net`) pour une intégration transparente avec votre Reverse Proxy (Nginx Proxy Manager, Traefik, Caddy, etc.) :
 
 ```
-                           [ Internet / Réseau Local ]
+                           [ Internet / Utilisateurs ]
                                         │
                                         ▼
-                           [ Reverse Proxy (ex: NPM / Traefik) ]
-                                 (sur 'nas-net')
-                                   │         │
-                   ┌───────────────┘         └──────────────┐
-                   │ :80                                    │ :3000
-                   ▼                                        ▼
-          ┌─────────────────┐                      ┌─────────────────┐
-          │ marsai-frontend │                      │ marsai-backend  │
-          │ (React + Nginx) │                      │ (Node.js API)   │
-          └─────────────────┘                      └────────┬────────┘
-                                                            │
-                                            ┌───────────────┴───────────────┐
-                                            ▼                               ▼
-                                   ┌─────────────────┐             ┌─────────────────┐
-                                   │    marsai-db    │             │ ./marsai-uploads│
-                                   │ (MariaDB 10.11) │             │ (Volume partagé)│
-                                   └─────────────────┘             └────────┬────────┘
-                                                                            │ (surveillance inotify)
-                                                                            ▼
-                                                                   ┌─────────────────┐
-                                                                   │ marsai-watchdog │
-                                                                   │ (ClamAV Démon)  │
-                                                                   └─────────────────┘
+                      [ Reverse Proxy (NPM / Traefik) ]
+                            (sur le réseau 'nas-net')
+                                    │         │
+                   ┌────────────────┘         └────────────────┐
+                   │ :8080 (interne :80)                       │ :3000
+                   ▼                                           ▼
+          ┌─────────────────┐                         ┌─────────────────┐
+          │ marsai-frontend │                         │ marsai-backend  │
+          │ (React + Nginx) │                         │ (Node.js API)   │
+          └─────────────────┘                         └────────┬────────┘
+                                                               │
+                                               ┌───────────────┴───────────────┐
+                                               ▼                               ▼
+                                      ┌─────────────────┐             ┌─────────────────┐
+                                      │    marsai-db    │             │ ./marsai-uploads│
+                                      │ (MariaDB 10.11) │             │ (Volume partagé)│
+                                      └─────────────────┘             └─────────────────┘
 ```
 
-| Service | Rôle | Port interne | Description |
+| Service | Rôle | Port hôte / interne | Description |
 | :--- | :--- | :--- | :--- |
-| **`marsai-frontend`** | Interface utilisateur | `80` | Application React/Vite/Tailwind compilée et servie par un conteneur léger Nginx. |
-| **`marsai-backend`** | API & Logique métier | `3000` | API Node.js / Express (TypeScript), gestion des utilisateurs, films, votes et uploads. |
-| **`marsai-db`** | Base de données | `3306` | MariaDB 10.11. Schéma initialisé automatiquement depuis `./marsai-backend/database/db.sql`. |
-| **`marsai-watchdog`** | Sécurité / Antivirus | - | Conteneur ClamAV surveillant en direct `./marsai-uploads` pour détruire tout malware téléversé. |
+| **`marsai-frontend`** | Interface utilisateur | `8080:80` | Application React 19 / Vite / Tailwind compilée en multi-stage build et servie par un conteneur Nginx optimisé. |
+| **`marsai-backend`** | API & Logique métier | `3000:3000` | API REST Node.js 22 / Express 5 (TypeScript compilé), exécutée sous utilisateur non-root `node`, avec contrôle d'accès RBAC et limitation de débit. |
+| **`marsai-db`** | Base de données | `3306` (interne) | MariaDB 10.11 avec initialisation automatique du schéma SQL (`./marsai-backend/database/db.sql`) et sondes d'état de santé (`healthcheck`). |
+| **Volume `./marsai-uploads`** | Stockage médias | - | Répertoire hôte persistant pour les affiches et vidéos soumises, monté dans `/app/uploads`. |
 
 ---
 
 ## 📋 Prérequis
 
-* **Docker Engine** (version 24.0+) et le plugin **Docker Compose v2** (`docker compose version`).
+* **Docker Engine** (version 24.0 ou supérieure) et **Docker Compose v2** (`docker compose version`).
 * **Git**.
+* Un **Reverse Proxy** (ex. Nginx Proxy Manager, Traefik, Caddy) configuré sur un réseau Docker partagé (par défaut `nas-net`).
 
 ---
 
@@ -77,22 +72,26 @@ La stack est composée de 4 services orchestrés via Docker Compose :
 
 ```text
 Marsai/
-├── docker-compose.yml         # Fichier principal d'orchestration de tous les services
+├── docker-compose.yml         # Fichier principal d'orchestration Docker Compose
 ├── .env.example               # Modèle des variables d'environnement
-├── .env                       # Variables d'environnement locales (non versionné)
-├── marsai-uploads/            # Volume local partagé pour les fichiers téléversés
+├── .env                       # Variables d'environnement de production (ignoré par Git)
+├── marsai-uploads/            # Dossier local monté pour le stockage des vidéos et images
+│   ├── images/                # Vignettes et affiches téléversées
+│   └── videos/                # Fichiers vidéo des films en compétition
 ├── marsai-frontend/           # [Frontend] Application React 19, TypeScript, Vite & Tailwind
-│   ├── src/                   # Code source de l'interface
-│   ├── nginx.conf             # Configuration du serveur web Nginx de production
-│   └── Dockerfile             # Build multi-stage (Build Vite -> Nginx)
-├── marsai-backend/            # [Backend] API REST Express 5, TypeScript, JWT & MariaDB
-│   ├── database/db.sql        # Script SQL d'initialisation de la BDD
-│   ├── scripts/create-admin.ts# Script d'initialisation du compte administrateur
-│   └── Dockerfile             # Conteneur Node.js d'exécution de l'API
-└── marsai-clamav-watchdog/    # [Sécurité] Chien de garde antivirus ClamAV
-    ├── Dockerfile             # Conteneur Alpine Linux avec ClamAV et inotify-tools
-    ├── entrypoint.sh          # Téléchargement et actualisation continue de la base virale
-    └── watchdog.sh            # Boucle inotifywait et destruction automatique des malwares
+│   ├── src/                   # Code source React (pages, composants, contextes)
+│   ├── nginx.conf             # Configuration Nginx de production (SPA fallback, headers)
+│   └── Dockerfile             # Multi-stage build (Vite -> Nginx Alpine)
+├── marsai-backend/            # [Backend] API REST Express 5, TypeScript & MariaDB
+│   ├── config/                # Configurations (BDD, Multer sécurisé, etc.)
+│   ├── controllers/           # Contrôleurs métier avec gestion d'erreurs sécurisée
+│   ├── database/db.sql        # Schéma et données initiales SQL
+│   ├── middlewares/           # Authentification JWT, RBAC, Rate Limiting, upload
+│   ├── routes/                # Définitions des routes API REST
+│   ├── scripts/create-admin.ts# Script CLI de création/mise à jour du compte administrateur
+│   └── Dockerfile             # Multi-stage build (tsc -> Node.js 22 Alpine non-root)
+├── marsai-clamav-watchdog/    # [Optionnel / Standalone] Watchdog antivirus ClamAV
+└── TODO.md                    # Feuille de route technique et état d'avancement sécurité
 ```
 
 ---
@@ -101,35 +100,47 @@ Marsai/
 
 ### Étape 1 : Cloner le Monorepo
 
-Clonez le dépôt unique qui contient désormais tous les sous-projets :
+Clonez le dépôt sur votre serveur ou machine hôte :
 
 ```bash
 git clone git@github.com:paguera/Marsai.git
 cd Marsai
 ```
 
+---
+
+### Étape 2 : Créer le réseau Docker externe
+
+La configuration `docker-compose.yml` utilise un réseau bridge externe nommé `nas-net` pour faciliter la communication avec votre Reverse Proxy.
+
+Créez ce réseau s'il n'existe pas déjà :
+
+```bash
+docker network create nas-net
+```
+
+> [!NOTE]
+> Si vous souhaitez utiliser un nom de réseau différent ou un réseau interne créé par Docker Compose, vous pouvez adapter la section `networks` du fichier [docker-compose.yml](file:///home/gabriel/dev/Marsai/docker-compose.yml).
+
+---
+
 ### Étape 3 : Configurer les variables d'environnement (`.env`)
 
-Copiez le modèle de configuration fourni puis adaptez les variables :
+Copiez le modèle de configuration fourni puis adaptez les valeurs avec vos paramètres réels :
 
 ```bash
 cp .env.example .env
 nano .env
 ```
 
-Renseignez-y les variables suivantes (en adaptant les mots de passe et URLs) :
+Exemple de configuration type :
 
 ```dotenv
 # ==============================================================================
 # Configuration Générale & URLs
 # ==============================================================================
-# Port d'écoute interne de l'API (par défaut 3000)
 PORT=3000
-
-# URL publique de l'API Backend (utilisée par le frontend et les liens absolus)
 BASE_URL=https://api.marsai.example.com
-
-# URL publique du Frontend (utilisée pour valider les requêtes CORS)
 FRONT_URL=https://marsai.example.com
 
 # ==============================================================================
@@ -143,8 +154,7 @@ MARSAI_DB_PASSWORD=votre_mot_de_passe_utilisateur_securise
 # ==============================================================================
 # Authentification & JWT
 # ==============================================================================
-# Clé secrète pour signer les tokens de session (générez une chaîne aléatoire)
-JWT_SECRET=generer_une_longue_chaine_aleatoire_ici
+JWT_SECRET=generer_une_longue_chaine_aleatoire_cryptographique_ici
 
 # ==============================================================================
 # Configuration Messagerie SMTP (Nodemailer)
@@ -161,20 +171,18 @@ MAIL_TO=contact@votre-domaine.com
 
 ### Étape 4 : Préparer le dossier d'uploads
 
-Le dossier `./marsai-uploads` stocke les images et fichiers envoyés par les utilisateurs. Il est partagé entre le backend et l'antivirus ClamAV.
-
-Créez-le et appliquez les permissions appropriées pour permettre l'écriture :
+Le dossier `./marsai-uploads` héberge les images et les vidéos des films soumis. Créez la structure requise et définissez les permissions adéquates pour le conteneur :
 
 ```bash
-mkdir -p marsai-uploads
-chmod 775 marsai-uploads
+mkdir -p marsai-uploads/images marsai-uploads/videos
+chmod -R 775 marsai-uploads
 ```
 
 ---
 
 ### Étape 5 : Démarrer la stack
 
-Lancez la compilation des images et le démarrage des conteneurs en arrière-plan :
+Lancez la compilation multi-stage des conteneurs et le démarrage de tous les services en arrière-plan :
 
 ```bash
 docker compose up -d --build
@@ -184,59 +192,72 @@ docker compose up -d --build
 ```bash
 docker compose ps
 ```
-Tous les conteneurs (`marsai-db`, `marsai-backend`, `marsai-frontend`, `marsai-watchdog`) doivent être au statut `Up` (ou `healthy` pour la base de données).
+Tous les conteneurs (`marsai-db`, `marsai-backend`, `marsai-frontend`) doivent afficher le statut `Up` (avec `healthy` pour la base de données).
 
-#### Suivre les logs de démarrage :
+#### Suivre les journaux (logs) :
 ```bash
 docker compose logs -f
 ```
-
-> [!TIP]
-> Au premier lancement de `marsai-watchdog`, ClamAV télécharge la dernière base virale officielle (`main.cvd`, `daily.cvd`). Cette étape peut prendre 1 à 2 minutes selon votre débit Internet.
 
 ---
 
 ### Étape 6 : Créer le premier compte administrateur
 
-Un script interactif est fourni dans le backend pour créer un utilisateur avec le rôle `ADMIN` en base de données :
+Le backend intègre un script dédié permettant d'initialiser ou de promouvoir un compte avec le rôle `ADMIN` :
 
 ```bash
+# Mode interactif (saisie guidée de l'email, mot de passe, prénom, nom)
 docker compose exec marsai-backend npm run create-admin
 ```
 
-Le script vous demandera :
-* L'email de l'administrateur
-* Le mot de passe
-* Le prénom
-* Le nom
-
-Vous pouvez également passer directement les paramètres en argument :
+Vous pouvez également passer les arguments en ligne de commande :
 ```bash
-docker compose exec marsai-backend npm run create-admin admin@marsai.fr "SuperPassword123!" John Doe
+docker compose exec marsai-backend node dist/scripts/create-admin.js admin@marsai.fr "MotDePasseFort123!" John Doe
 ```
 
 ---
 
-## 🛡️ Fonctionnement de l'Antivirus (Watchdog ClamAV)
+## 🌐 Accès et Reverse Proxy
 
-Le conteneur `marsai-watchdog` assure la sécurité en temps réel :
+Une fois la stack démarrée, configurez votre Reverse Proxy (Nginx Proxy Manager, Traefik, Caddy, etc.) connecté au réseau Docker `nas-net` :
 
-1. **Surveillance d'événements (`inotifywait`)** : Le démon surveille récursivement tout ajout de fichier (`close_write`, `moved_to`) dans le volume partagé `./marsai-uploads`.
-2. **Scan via socket (`clamdscan`)** : Dès qu'un fichier est écrit sur le disque, il est analysé par le socket local de `clamd`.
-3. **Suppression immédiate en cas d'infection** : Si un malware ou virus est détecté (code retour `1`), le script détruit immédiatement le fichier (`rm -f`) et consigne une alerte de sécurité critique dans les logs Docker.
-4. **Mise à jour automatique** : Le démon `freshclam` tourne en arrière-plan et actualise les signatures toutes les 2 heures.
+### Configuration Frontend
+* **Domaine :** `marsai.example.com`
+* **Forward Hostname / IP :** `marsai-frontend` (ou IP de l'hôte)
+* **Forward Port :** `80` (si routage direct sur `nas-net`) ou `8080` (si routage via le port hôte)
+* **SSL :** Activer le certificat SSL/TLS (Let's Encrypt / HSTS / HTTP/2)
 
-#### Tester l'antivirus (Fichier de test EICAR) :
-Vous pouvez vérifier le bon fonctionnement de la suppression en créant un faux virus dans le dossier d'uploads :
+### Configuration Backend API
+* **Domaine :** `api.marsai.example.com`
+* **Forward Hostname / IP :** `marsai-backend` (ou IP de l'hôte)
+* **Forward Port :** `3000`
+* **SSL :** Activer le certificat SSL/TLS
+* **Taille d'upload :** Augmenter la limite `client_max_body_size` (ex. `500M` pour autoriser le téléversement de vidéos).
 
-```bash
-# Générer la signature de test standard EICAR
-echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' > marsai-uploads/test_virus.txt
+---
 
-# Observer la détection et la suppression dans les logs
-docker compose logs -f marsai-watchdog
-```
-*Le fichier `marsai-uploads/test_virus.txt` doit être supprimé automatiquement en une fraction de seconde.*
+## 🛡️ Sécurité & Durcissement
+
+La plateforme applique des règles strictes de sécurité et de résilience :
+
+1. **Protection des routes et Contrôle d'Accès (RBAC) :**
+   - La soumission de films (`POST /movies`), la gestion des événements et la création de comptes sont strictement réservées aux utilisateurs authentifiés (`ADMIN` ou `JURY`).
+   - L'authentification est vérifiée *en amont* du traitement des fichiers téléversés pour prévenir tout abus de stockage.
+2. **Rate Limiting (Anti-Brute Force & Anti-DoS) :**
+   - Limitation granulaire via `express-rate-limit` sur l'authentification (`/auth/login`), la réservation d'événements, la newsletter et les téléversements.
+3. **Sécurité des Fichiers & Téléversements :**
+   - Renommage cryptographique aléatoire des fichiers (`crypto.randomBytes`) évitant les attaques par *Path Traversal*.
+   - Double vérification du type MIME et de l'extension de fichier.
+   - Mécanisme d'annulation et nettoyage automatique (*upload rollback*) des fichiers temporaires en cas d'échec de validation ou d'insertion en BDD.
+4. **En-têtes HTTP & Confidentialité :**
+   - Protection par `helmet` avec politiques cross-origin adaptées.
+   - Suppression des en-têtes révélateurs (`x-powered-by`).
+   - Masquage des erreurs BDD internes vers le client pour éviter les fuites d'informations.
+   - Filtrage strict des données personnelles des collaborateurs selon le rôle (RGPD).
+5. **Durcissement des Conteneurs Docker :**
+   - Multi-stage builds allégés basés sur Alpine Linux.
+   - Exécution du backend sous l'utilisateur non privilégié `node`.
+   - Option `no-new-privileges:true` et quotas CPU/mémoire configurés dans `docker-compose.yml`.
 
 ---
 
@@ -246,10 +267,36 @@ docker compose logs -f marsai-watchdog
 | :--- | :--- |
 | **Démarrer les services** | `docker compose up -d` |
 | **Arrêter les services** | `docker compose down` |
-| **Reconstruire après mise à jour du code** | `docker compose up -d --build` |
-| **Voir les logs complets** | `docker compose logs -f` |
-| **Voir les logs d'un service spécifique** | `docker compose logs -f marsai-backend` |
-| **Voir les alertes de l'antivirus** | `docker compose logs -f marsai-watchdog` |
-| **Vérifier l'état de santé de la BDD** | `docker compose ps marsai-db` |
-| **Accéder au shell d'un conteneur** | `docker compose exec marsai-backend bash` |
-| **Créer un administrateur** | `docker compose exec marsai-backend npm run create-admin` |
+| **Reconstruire et relancer** | `docker compose up -d --build` |
+| **Suivre les logs en temps réel** | `docker compose logs -f` |
+| **Logs du backend uniquement** | `docker compose logs -f marsai-backend` |
+| **Logs du frontend uniquement** | `docker compose logs -f marsai-frontend` |
+| **Vérifier l'état de la base de données** | `docker compose ps marsai-db` |
+| **Ouvrir un shell dans le conteneur API** | `docker compose exec marsai-backend sh` |
+| **Créer ou mettre à jour un administrateur** | `docker compose exec marsai-backend npm run create-admin` |
+| **Sauvegarder la base de données** | `docker compose exec marsai-db mysqldump -u marsai_user -p marsai > backup.sql` |
+
+---
+
+## 🔧 Dépannage courant
+
+### 1. Erreur de réseau `network nas-net not found`
+Si Docker Compose indique que le réseau externe n'existe pas :
+```bash
+docker network create nas-net
+```
+
+### 2. Problème d'écriture dans `marsai-uploads`
+Si le backend renvoie une erreur de permission lors du téléversement d'images ou de vidéos :
+```bash
+chmod -R 775 marsai-uploads
+```
+
+### 3. Le conteneur backend attend la base de données
+Le service `marsai-backend` attend que `marsai-db` soit en état `healthy` avant de démarrer. Si MariaDB met du temps à s'initialiser au tout premier lancement, observez son état avec :
+```bash
+docker compose logs -f marsai-db
+```
+
+### 4. Erreurs CORS sur le frontend
+Vérifiez que la variable `FRONT_URL` dans votre fichier `.env` correspond exactement à l'URL publique utilisée dans le navigateur (ex: `https://marsai.example.com` sans slash final), et que `VITE_API_URL` / `BASE_URL` pointe bien vers l'adresse publique du backend.
