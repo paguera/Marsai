@@ -8,8 +8,10 @@ Ce document récapitule l'ensemble des vulnérabilités identifiées lors de l'a
 - [x] **Protection de la soumission de films (`POST /movies` et route `/submit`) :**
   - Restreinte exclusivement aux rôles `ADMIN` et `JURY`.
   - Contrôle d'authentification et d'autorisation appliqué *avant* le middleware de téléversement `multer`.
-- [x] **Désactivation de ClamAV Watchdog :**
-  - Suppression/Désactivation du conteneur lourd ClamAV (`marsai-watchdog`) dans `docker-compose.yml` pour libérer ~1 Go de RAM et de la charge CPU sur le serveur/NAS.
+- [x] **Passage de ClamAV Watchdog en Profil Docker Optionnel (`profiles: ["antivirus"]`) :**
+  - Découplage du conteneur lourd ClamAV (`marsai-watchdog`) dans `docker-compose.yml` via les profils Docker Compose.
+  - Par défaut (`docker compose up -d`), ClamAV ne démarre pas afin d'économiser ~1.5 Go de RAM et du CPU sur les serveurs/NAS à ressources limitées.
+  - Activé à la demande pour une sécurité maximale (`docker compose --profile antivirus up -d`).
 
 ---
 
