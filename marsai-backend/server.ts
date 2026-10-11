@@ -3,6 +3,7 @@ import { connect } from "./config/database"; // Importer la fonction de connexio
 import express, { Request, Response, Application } from "express"; // Importer Express
 import path from "path"; // Pour gérer les chemins de fichiers
 import cors, { CorsOptions } from "cors"; // Pour gérer les requêtes CORS
+import cookieParser from "cookie-parser"; // Pour parser les cookies entrants
 
 // Importer les routes
 import movieRoutes from "./routes/movies.routes";
@@ -35,6 +36,9 @@ app.use(globalLimiter);
 
 // Middleware : Parser les requêtes JSON (limité à 10mb pour éviter les payload DoS)
 app.use(express.json({ limit: "10mb" }));
+
+// Middleware : Parser les cookies HTTP
+app.use(cookieParser());
 
 // Configuration CORS
 const isProduction = process.env.NODE_ENV === "production";
@@ -99,13 +103,6 @@ app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {
       ? "Une erreur interne est survenue."
       : err.message || "Erreur serveur.",
   });
-});
-app.use((req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (token) {
-    document.cookie = `token=${token}; path=/; HttpOnly; SameSite=Lax`;
-  }
-  next();
 });
 
 // Fonction principale pour démarrer le serveur

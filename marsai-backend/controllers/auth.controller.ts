@@ -46,11 +46,25 @@ const addUser = async (req: Request, res: Response) => {
   }
 };
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 8 * 60 * 60 * 1000, // 8 heures
+});
+
 const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
     const result = await authService.login(email, password);
+
+    // Définir le cookie HttpOnly avec le jeton JWT
+    res.cookie("auth_token", result.token, getCookieOptions());
+
     res.status(200).json(result);
   } catch (error: any) {
     if (error.message === "INVALID_CREDENTIALS") {
@@ -59,6 +73,16 @@ const loginUser = async (req: Request, res: Response) => {
     console.error("Erreur loginUser :", error);
     return res.status(500).json({ error: "Une erreur interne est survenue." });
   }
+};
+
+const logoutUser = async (req: Request, res: Response) => {
+  res.clearCookie("auth_token", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax" as const,
+    path: "/",
+  });
+  return res.status(200).json({ message: "Déconnexion réussie." });
 };
 
 const getMe = async (req: any, res: Response) => {
@@ -76,4 +100,4 @@ const getMe = async (req: any, res: Response) => {
   }
 };
 
-export default { addUser, loginUser, getMe };
+export default { addUser, loginUser, logoutUser, getMe };

@@ -37,7 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 function getCookie(name: string): string | null {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift();
+    if (parts.length === 2) return parts.pop()?.split(';').shift() ?? null;
     return null;
 }
 
@@ -48,21 +48,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const navigate = useNavigate();
 
     // Fonction pour gérer la déconnexion
-    const logout = () => {
-        document.cookie = 'auth_token=; path=/; HttpOnly; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    const logout = async () => {
+        try {
+            await fetch(import.meta.env.VITE_API_URL + "/auth/logout", {
+                method: "POST",
+                credentials: "include",
+            });
+        } catch (error) {
+            console.error("Erreur lors de la déconnexion :", error);
+        }
         setToken(null);
         setUser(null);
         navigate("/");
     };
 
     // Fonction pour récupérer les données de l'utilisateur à partir du token d'authentification
-    const fetchUserData = async (authToken: string): Promise<User | null> => {
+    const fetchUserData = async (authToken?: string | null): Promise<User | null> => {
         try {
             const response = await fetch(import.meta.env.VITE_API_URL + "/auth/me", {
                 method: "GET",
                 headers: {
-                    Authorization: `Bearer ${authToken}`,
+                    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
                 },
+                credentials: "include",
             });
 
             if (response.ok) {
@@ -70,7 +78,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return data as User;
             } else if (response.status === 401 || response.status === 403) {
                 // Token invalide ou expiré
-                logout();
+                setToken(null);
+                setUser(null);
             }
         } catch (error) {
             console.error(
@@ -102,10 +111,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     console.error("Erreur lors de l'initialisation de l'authentification :", error);
                     setUser(null);
                 }
+            } else {
+                // Vérifier si un cookie HttpOnly valide est déjà présent
+                const userData = await fetchUserData();
+                if (userData) {
+                    setUser(userData);
+                }
             }
         };
         initAuth();
-    }, [token]); // Exécuter quand le token change
+    }, [token]);
 
     const login = async (formData: unknown) => {
         try {
@@ -117,15 +132,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(formData),
+                    credentials: "include",
                 },
             );
 
             if (response.ok) {
                 const data = await response.json();
 
-                // Définir le cookie d'authentification (supposé que `data.token` existe)
-                document.cookie = `auth_token=${data.token}; path=/; HttpOnly; SameSite=Lax`;
-                setToken(data.token);
+                if (data.token) {
+                    setToken(data.token);
+                }
 
                 // Mettre à jour l'état utilisateur
                 setUser(data.user);
