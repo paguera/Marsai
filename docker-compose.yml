@@ -75,8 +75,32 @@ services:
       marsai-backend:
         condition: service_started
 
+  # --- MARSAI: ANTIVIRUS WATCHDOG (PROFIL OPTIONNEL) ---
+  marsai-watchdog:
+    profiles:
+      - antivirus
+      - full
+    build:
+      context: ./marsai-clamav-watchdog
+    image: marsai-watchdog:latest
+    container_name: marsai-watchdog
+    restart: always
+    volumes:
+      - ./marsai-uploads:/scandir:z
+      - marsai-clamav-db:/var/lib/clamav
+    networks:
+      - nas-net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2048M
+
 volumes:
   marsai-db-data:
+  marsai-clamav-db:
 
 networks:
   nas-net:

@@ -1,8 +1,8 @@
 # 🚀 MarsAI — Plateforme & Monorepo
 
-> **MarsAI** est une plateforme web complète dédiée au festival international du film d'IA, orchestrant la diffusion des œuvres en compétition, l'espace d'évaluation du jury, la gestion des événements et la billetterie. Déployée sous Docker (React, API Node.js / Express, MariaDB), la stack intègre les meilleures pratiques de sécurité et d'optimisation des performances.
+> **MarsAI** est une plateforme web complète dédiée au festival international du film d'IA, orchestrant la diffusion des œuvres en compétition, l'espace d'évaluation du jury, la gestion des événements et la billetterie. Déployée sous Docker (React, API Node.js / Express, MariaDB), la stack intègre les meilleures pratiques de sécurité et propose un **antivirus ClamAV temps réel** analysant chaque média téléversé pour garantir une expérience à la fois fluide et ultra-sécurisée.
 
-Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo** : interface utilisateur frontend, API backend sécurisée, base de données MariaDB et orchestration Docker pour la production.
+Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo** : interface utilisateur frontend, API backend sécurisée, base de données MariaDB, chien de garde antivirus et orchestration Docker pour la production.
 
 ---
 
@@ -15,12 +15,13 @@ Ce dépôt centralise l'intégralité du projet MarsAI sous forme de **monorepo*
    - [Étape 2 : Créer le réseau Docker externe](#étape-2--créer-le-réseau-docker-externe)
    - [Étape 3 : Configurer les variables d'environnement (`.env`)](#étape-3--configurer-les-variables-denvironnement-env)
    - [Étape 4 : Préparer le dossier d'uploads](#étape-4--préparer-le-dossier-duploads)
-   - [Étape 5 : Démarrer la stack](#étape-5--démarrer-la-stack)
+   - [Étape 5 : Démarrer la stack (avec ou sans antivirus)](#étape-5--démarrer-la-stack-avec-ou-sans-antivirus)
    - [Étape 6 : Créer le premier compte administrateur](#étape-6--créer-le-premier-compte-administrateur)
 5. [Accès et Reverse Proxy](#-accès-et-reverse-proxy)
-6. [Sécurité & Durcissement](#-sécurité--durcissement)
-7. [Commandes utiles au quotidien](#-commandes-utiles-au-quotidien)
-8. [Dépannage courant](#-dépannage-courant)
+6. [Antivirus ClamAV en temps réel (Profil optionnel)](#-antivirus-clamav-en-temps-réel-profil-optionnel)
+7. [Sécurité & Durcissement](#-sécurité--durcissement)
+8. [Commandes utiles au quotidien](#-commandes-utiles-au-quotidien)
+9. [Dépannage courant](#-dépannage-courant)
 
 ---
 
@@ -48,7 +49,14 @@ La stack de production est orchestrée via **Docker Compose** et connectée à u
                                       ┌─────────────────┐             ┌─────────────────┐
                                       │    marsai-db    │             │ ./marsai-uploads│
                                       │ (MariaDB 10.11) │             │ (Volume partagé)│
-                                      └─────────────────┘             └─────────────────┘
+                                      └─────────────────┘             └────────┬────────┘
+                                                                               │ (surveillance inotify)
+                                                                               ▼
+                                                                      ┌─────────────────┐
+                                                                      │ marsai-watchdog │
+                                                                      │ (ClamAV Démon)  │
+                                                                      │ *Profil optionnel│
+                                                                      └─────────────────┘
 ```
 
 | Service | Rôle | Port hôte / interne | Description |
@@ -56,6 +64,7 @@ La stack de production est orchestrée via **Docker Compose** et connectée à u
 | **`marsai-frontend`** | Interface utilisateur | `8080:80` | Application React 19 / Vite / Tailwind compilée en multi-stage build et servie par un conteneur Nginx optimisé. |
 | **`marsai-backend`** | API & Logique métier | `3000:3000` | API REST Node.js 22 / Express 5 (TypeScript compilé), exécutée sous utilisateur non-root `node`, avec contrôle d'accès RBAC et limitation de débit. |
 | **`marsai-db`** | Base de données | `3306` (interne) | MariaDB 10.11 avec initialisation automatique du schéma SQL (`./marsai-backend/database/db.sql`) et sondes d'état de santé (`healthcheck`). |
+| **`marsai-watchdog`** | Sécurité / Antivirus | - | *(Optionnel, profil `antivirus`)* Conteneur ClamAV surveillant en direct `./marsai-uploads` pour détruire immédiatement tout malware téléversé. |
 | **Volume `./marsai-uploads`** | Stockage médias | - | Répertoire hôte persistant pour les affiches et vidéos soumises, monté dans `/app/uploads`. |
 
 ---
@@ -180,19 +189,27 @@ chmod -R 775 marsai-uploads
 
 ---
 
-### Étape 5 : Démarrer la stack
+### Étape 5 : Démarrer la stack (avec ou sans antivirus)
 
-Lancez la compilation multi-stage des conteneurs et le démarrage de tous les services en arrière-plan :
+Selon les ressources matérielles de votre machine hôte (NAS ou serveur dédié), choisissez l'un des modes suivants :
 
+#### Option A : Démarrage standard (Recommandé pour NAS / petites configurations)
+Démarre la base de données, l'API backend et le frontend. L'antivirus ClamAV reste inactif pour préserver la mémoire vive (~1.5 Go de RAM économisés) :
 ```bash
 docker compose up -d --build
+```
+
+#### Option B : Démarrage haute sécurité avec ClamAV Watchdog
+Démarre tous les services ainsi que le conteneur `marsai-watchdog` qui analyse en temps réel chaque média téléversé :
+```bash
+docker compose --profile antivirus up -d --build
 ```
 
 #### Vérifier l'état d'exécution :
 ```bash
 docker compose ps
 ```
-Tous les conteneurs (`marsai-db`, `marsai-backend`, `marsai-frontend`) doivent afficher le statut `Up` (avec `healthy` pour la base de données).
+Tous les conteneurs démarrés doivent afficher le statut `Up` (avec `healthy` pour la base de données).
 
 #### Suivre les journaux (logs) :
 ```bash
@@ -236,6 +253,29 @@ Une fois la stack démarrée, configurez votre Reverse Proxy (Nginx Proxy Manage
 
 ---
 
+## 🛡️ Antivirus ClamAV en temps réel (Profil optionnel)
+
+Le conteneur `marsai-watchdog` offre une couche de défense en profondeur (*Defense in Depth*) pour neutraliser les fichiers malveillants dès leur écriture sur le stockage partagé :
+
+1. **Surveillance d'événements (`inotifywait`)** : Le démon surveille récursivement tout ajout ou écriture de fichier (`close_write`, `moved_to`) dans le volume `./marsai-uploads`.
+2. **Scan instantané via socket (`clamdscan`)** : Dès qu'un fichier est écrit, il est analysé par le démon `clamd` via son socket UNIX en une fraction de seconde.
+3. **Destruction immédiate en cas d'infection** : Si un malware ou virus est détecté (code retour `1`), le script détruit immédiatement le fichier (`rm -f`) et consigne une alerte de sécurité critique dans les journaux Docker.
+4. **Mise à jour automatique (`freshclam`)** : Les signatures officielles de la base virale sont téléchargées au premier lancement puis actualisées automatiquement toutes les 2 heures.
+
+#### Tester l'antivirus (Fichier de test standard EICAR) :
+Si vous activez le profil antivirus, vous pouvez tester la réactivité du watchdog avec la signature inoffensive EICAR :
+
+```bash
+# Générer la signature de test standard EICAR
+echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' > marsai-uploads/test_virus.txt
+
+# Observer la détection et la destruction immédiate dans les logs
+docker compose logs -f marsai-watchdog
+```
+*Le fichier `marsai-uploads/test_virus.txt` est immédiatement détecté, détruit du disque et consigné dans les logs.*
+
+---
+
 ## 🛡️ Sécurité & Durcissement
 
 La plateforme applique des règles strictes de sécurité et de résilience :
@@ -265,12 +305,14 @@ La plateforme applique des règles strictes de sécurité et de résilience :
 
 | Action | Commande |
 | :--- | :--- |
-| **Démarrer les services** | `docker compose up -d` |
+| **Démarrer les services (mode standard)** | `docker compose up -d` |
+| **Démarrer avec antivirus ClamAV actif** | `docker compose --profile antivirus up -d` |
 | **Arrêter les services** | `docker compose down` |
 | **Reconstruire et relancer** | `docker compose up -d --build` |
 | **Suivre les logs en temps réel** | `docker compose logs -f` |
 | **Logs du backend uniquement** | `docker compose logs -f marsai-backend` |
 | **Logs du frontend uniquement** | `docker compose logs -f marsai-frontend` |
+| **Logs de l'antivirus ClamAV** | `docker compose logs -f marsai-watchdog` |
 | **Vérifier l'état de la base de données** | `docker compose ps marsai-db` |
 | **Ouvrir un shell dans le conteneur API** | `docker compose exec marsai-backend sh` |
 | **Créer ou mettre à jour un administrateur** | `docker compose exec marsai-backend npm run create-admin` |
