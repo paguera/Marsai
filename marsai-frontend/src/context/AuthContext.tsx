@@ -42,9 +42,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
   const navigate = useNavigate();
   const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
+    document.cookie = `token=${token}; path=/; HttpOnly; SameSite=Lax`;
+    setToken(token);
+    setUser(userData);
     navigate("/");
   };
 
@@ -89,20 +89,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             return;
           }
 
-          if (!user) {
-            const userData = await fetchUserData(token);
-            setUser(userData);
-          }
+          // Si le token est expiré ou invalide, fetchUserData aura déjà géré la déconnexion implicite
+          // en ne retournant pas d'utilisateur, et le backend aura effacé le cookie.
         } catch (error: any) {
-          console.error("Token malformé :", error);
-          logout();
+          console.error("Erreur lors de l'initialisation de l'authentification :", error);
+          // En cas d'erreur grave, on s'assure que l'utilisateur est déconnecté
+          setUser(null);
         }
-      } else {
-        setUser(null);
-      }
     };
     initAuth();
-  }, [token]);
+  }, []); // Dépendance vide, car le token n'est plus géré comme un état ici
 
   const login = async (formData: unknown) => {
     try {
@@ -114,14 +110,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(formData),
+          credentials: "include", // Important pour recevoir les cookies
         },
       );
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
-        setUser(data.user);
+        // Le cookie httpOnly est défini par le backend, pas besoin de le gérer ici
+        setUser(data.user); // Supposons que le backend renvoie toujours les données utilisateur
 
         if (data.user.role.includes("ADMIN")) {
           navigate("/dashboard");
@@ -138,10 +134,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
-    </AuthContext.Provider>
   );
+};
 };
 
 // - useAuth : permet aux composants enfants d'accéder au contexte d'authentification,

@@ -100,6 +100,13 @@ app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {
       : err.message || "Erreur serveur.",
   });
 });
+app.use((req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (token) {
+    document.cookie = `token=${token}; path=/; HttpOnly; SameSite=Lax`;
+  }
+  next();
+});
 
 // Fonction principale pour démarrer le serveur
 async function startServer() {
