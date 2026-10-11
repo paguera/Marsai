@@ -26,8 +26,8 @@ services:
     image: marsai-backend:latest
     container_name: marsai-backend
     restart: always
-    ports:
-     - "3000:3000"
+#    ports:
+#      - "3000:3000"
     networks:
       - nas-net
     env_file:
@@ -60,8 +60,8 @@ services:
     image: marsai-frontend:latest
     container_name: marsai-frontend
     restart: always
-    ports:
-      - "8080:80"
+#    ports:
+#      - "8080:80"
     networks:
       - nas-net
     security_opt:
