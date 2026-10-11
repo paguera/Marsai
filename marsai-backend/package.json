@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest",
     "dev": "nodemon --exec ts-node server.ts",
-    "build": "tsc server.ts scripts/create-admin.ts --outDir dist --esModuleInterop --skipLibCheck --target es2020 --moduleResolution node",
+    "build": "tsc -p tsconfig.json",
     "create-admin": "node dist/scripts/create-admin.js",
     "create-admin:dev": "ts-node scripts/create-admin.ts"
   },
