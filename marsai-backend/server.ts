@@ -21,6 +21,9 @@ import { globalLimiter } from "./middlewares/rateLimiter";
 // Initialiser l'application Express
 const app: Application = express();
 
+// Faire confiance au premier proxy (Cloudflare Tunnel / Reverse Proxy) pour X-Forwarded-For
+app.set("trust proxy", 1);
+
 // Masquer la signature d'Express
 app.disable("x-powered-by");
 
@@ -85,9 +88,9 @@ app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/jury", juryRoutes);
 app.use("/newsletter", subscribersRoutes);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/uploads/images", express.static(path.join(__dirname, "uploads/images")));
-app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/uploads/images", express.static(path.join(process.cwd(), "uploads/images")));
+app.use("/uploads/videos", express.static(path.join(process.cwd(), "uploads/videos")));
 app.use("/subscribers", subscribersRoutes);
 app.use("/newsletters", newsletterRoutes);
 app.use("/tags", tagsRoutes);
