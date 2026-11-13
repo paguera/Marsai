@@ -1,0 +1,16 @@
+name: CI Auto (TestsBuilder)
+
+on:
+  push:
+    branches: [ main, master, dev, develop ]
+  pull_request:
+    branches: [ main, master, dev, develop ]
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: Mon-studio-dev/.github/.github/workflows/universal-ci.yml@main
+    # Optionnel : décommentez ci-dessous si votre projet est dans un sous-dossier ou nécessite une commande spécifique
+    # with:
+    #   working_directory: "."
+    #   custom_command: "make test"
